@@ -252,6 +252,7 @@ class DayCare
 
     def set_pokerus(egg)
       egg.givePokerus if rand(65_536) < Settings::POKERUS_CHANCE
+      egg.givePlague if rand(65_536) < Settings::PLAGUE_CHANCE
     end
   end
 

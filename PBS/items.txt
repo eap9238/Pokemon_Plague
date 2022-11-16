@@ -731,6 +731,14 @@ SellPrice = 2000
 Flags = Fling_60
 Description = If the holder of this item takes damage, the attacker will also be damaged upon contact.
 #-------------------------------
+[FACEMASK]
+Name = Face Mask
+NamePlural = Face Masks
+Pocket = 1
+Price = 2000
+SellPrice = 1000
+Description = An item to be held by a Pokémon. This protects the user from certain spore-based moves.
+#-------------------------------
 [ASSAULTVEST]
 Name = Assault Vest
 NamePlural = Assault Vests

@@ -9,10 +9,12 @@ class Pokemon
     # Is the infection dangerous
     attr_reader :plague
     # Strain of infection
-    # 0 (very long), 1 (long), 2 (medium), 3 (short), and 4 (very short)
+    # 0 (very short) ... 15 (very long)
     attr_reader :strain
     # Steps remaining in current stage
     attr_reader :step
+    # Steps remaining in asymptomatic stage
+    attr_reader :incubation
 
     # Generates a pokérus state
     def initialize
@@ -20,23 +22,87 @@ class Pokemon
       @plague = false
       @strain   = 0
       @step = 0
+      @incubation = 0
     end
       
-    def givePokerus(strain = -1, seed = 5)
+    def givePokerus(strain)
       @strain = strain
-      @strain = rand(3...4) if strain < 0 || strain >= 16
-      
-      step = seed * 6 - strain
+
+      if @strain < 0 || @strain >= 16
+        @strain = rand(1...16)
+      end
+
+      @plague = false
+      @step = @strain * 100
+      @incubation = @strain * 10
+      @stage = 1
     end
       
-    def givePlague(strain = -1, seed = 5)
+    def givePlague(strain)
       @strain = strain
-      @strain = rand(0...4) if strain < 0 || strain >= 16
-      
+
+      if @strain < 0 || @strain >= 16
+        @strain = rand(1...16) 
+        adjust = (Settings::PLAGUE_CHANCE / 1000).ceil()
+
+        @strain = ((@strain + adjust) / 2).ceil()
+      end
+
+      @plague = true
+      @step = @strain * 100
+      @incubation = @strain * 10
+      @stage = 1
+    end
+
+    def reset()
+      @step = @strain * 100
+      @incubation = @strain * 10
+    end
+
+    def cure()
+      if stage == 1 && stage == 3
+        stage = 2
+      end
+
+      @step = 0
+      @incubation = 0
+    end
+
+    def clear()
+      @stage   = 0
+      @plague = false
+      @strain   = 0
+      @step = 0
+      @incubation = 0
     end
       
-    def decreaseStep
-      step -= 1
+    def decreaseStep(count)
+      return if @stage != 1
+
+      if @incubation > 0
+        @incubation -= count
+
+        if @incubation < 0
+          count += @incubation
+          @incubation = 0
+        end
+      end
+
+      if @step > 0 && @incubation == 0
+        @step -= count
+      end
+
+      if @step <= 0 && @incubation == 0
+        if @plague
+          @stage = 3
+        else
+          @stage = 2
+        end
+      end
+    end
+
+    def symptomatic()
+      return ((@stage == 1 && @incubation <= 0) || @stage == 3)
     end
     
   end

@@ -48,7 +48,6 @@ class PokemonGlobalMetadata
   attr_accessor :mapTrail
   # Counters
   attr_accessor :happinessSteps
-  attr_accessor :pokerusTime
   # Save file
   attr_accessor :safesave
 
@@ -102,7 +101,6 @@ class PokemonGlobalMetadata
     @mapTrail             = []
     # Counters
     @happinessSteps       = 0
-    @pokerusTime          = nil
     # Save file
     @safesave             = false
   end

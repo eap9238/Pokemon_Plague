@@ -37,6 +37,8 @@ class Battle
           next unless b.participants.include?(i) || expShare.include?(i)
           pbGainEVsOne(i, b)
           pbGainExpOne(i, b, numPartic, expShare, expAll, !pkmn.shadowPokemon?)
+          next unless b.participants.include?(i)
+          pbCheckInfectionOne(i, b)
         end
         # Gain EVs and Exp for all other Pokémon because of Exp All
         if expAll
@@ -53,6 +55,27 @@ class Battle
       end
       # Clear the participants array
       b.participants = []
+    end
+  end
+
+  def pbCheckInfectionOne(idxParty, defeatedBattler)
+    pkmn = pbParty(0)[idxParty]   # The Pokémon that contacted the opponent
+    opponent = defeatedBattler.pokemon
+
+    return unless !(opponent.pokerusStage == 1 || pkmn.pokerusStage == 3)
+
+    chance = 30
+    i = Battle::ItemEffects.triggerPkrsInfectionModifier(opponent.item, nil, chance)
+    chance = i if i >= 0
+
+    i = Battle::ItemEffects.triggerPkrsInfectionModifier(pkmn.item, nil, chance)
+    if i < 0
+      i = Battle::ItemEffects.triggerPkrsInfectionModifier(@initialItems[0][idxParty], nil, chance)
+    end
+    chance = i if i >= 0
+
+    if pkmn.pokerusStage == 0 && rand(100) <= chance
+      $player.party[idxParty - 1].infectPokemon(opponent.pokerus)
     end
   end
 

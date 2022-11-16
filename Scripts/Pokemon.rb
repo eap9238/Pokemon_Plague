@@ -36,6 +36,8 @@ class Pokemon
   attr_accessor :cool, :beauty, :cute, :smart, :tough, :sheen
   # @return [Pokerus] the Pokérus state of the pokemon
   attr_accessor :pokerus
+  # @return [Boolean] has the Pokémon been tested for Pokérus
+  attr_accessor :tested
   # @return [Integer] this Pokémon's current happiness (an integer between 0 and 255)
   attr_accessor :happiness
   # @return [Symbol] the item ID of the Poké Ball this Pokémon is in
@@ -795,46 +797,61 @@ class Pokemon
     return @pokerus.stage
   end
 
+  def pokerusTest()
+    if @pokerus.stage == 1
+      @tested = true
+      return true
+    end
+
+    return false
+  end
+
+  def isSymptomatic()
+    return @pokerus.symptomatic() || @tested
+  end
+
   # Gives this Pokémon Pokérus (either the specified strain or a random one).
   # @param strain [Integer] Pokérus strain to give (1-15 inclusive, or 0 for random)
-  def givePokerus(strain = 0)
+  def givePokerus(strain = -1)
     return if self.pokerusStage == 2   # Can't re-infect a cured Pokémon
     $stats.pokerus_infections += 1
-    strain = rand(1...16) if strain <= 0 || strain >= 16
-    time = 1 + (strain % 4)
-    @pokerus = time
-    @pokerus |= strain << 4
+    @pokerus.givePokerus(strain)
   end
 
   # Gives this Pokémon Plaguérus (either the specified strain or a random one).
   # @param strain [Integer] Plague strain to give (1-15 inclusive, or 0 for random)
-  def givePlague(strain = 0)
+  def givePlague(strain = -1)
     return if self.pokerusStage == 2   # Can't re-infect a cured Pokémon
     $stats.pokerus_infections += 1
-    strain = rand(1...16) if strain <= 0 || strain >= 16
-    time = 1 + (strain % 4)
-    @pokerus = time
-    @pokerus |= strain << 4
+    @pokerus.givePlague(strain)
   end
 
   # Resets the infection time for this Pokémon's Pokérus (even if cured).
   def resetPokerusTime
-    return if @pokerus.stage == 0
-    strain = @pokerus / 16
-    time = 1 + (strain % 4)
-    @pokerus = time
-    @pokerus |= strain << 4
+    @pokerus.reset()
+  end
+
+  def infectPokemon(infection)
+    if infection.plague
+      givePlague(infection.strain)
+    else
+      givePokerus(infection.strain)
+    end
   end
 
   # Reduces the time remaining for this Pokémon's Pokérus (if infected).
-  def lowerPokerusCount
-    return if @pokerus.stage != 1
-    @pokerus.decreaseStep -= 1
+  def lowerPokerusCount(count = 1)
+    @pokerus.decreaseStep(count)
   end
 
   # Cures this Pokémon's Pokérus (if infected).
   def curePokerus
-    @pokerus -= @pokerus % 16
+    @pokerus.cure()
+  end
+
+  # Removes this Pokémon's Pokérus (if infected).
+  def clearPokerus
+    @pokerus.clear()
   end
 
   #=============================================================================
@@ -1188,6 +1205,7 @@ class Pokemon
     @tough            = 0
     @sheen            = 0
     @pokerus          = Pokerus.new()
+    @tested           = false
     @name             = nil
     @happiness        = species_data.happiness
     @poke_ball        = :POKEBALL
