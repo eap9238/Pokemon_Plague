@@ -367,7 +367,8 @@ class PokemonPartyPanel < Sprite
     draw_gender
     draw_hp
     draw_status
-    draw_shiny_icon
+    # TODO use this space to draw pokerus
+    #draw_shiny_icon
     draw_annotation
   end
 

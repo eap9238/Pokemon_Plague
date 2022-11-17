@@ -96,11 +96,12 @@ class PokemonPartyHud < Component
       # Information Overlay
       @sprites["overlay"].bitmap.blt(spacing + (Graphics.width/8) + 16, Graphics.height/2 - 102,
                           @infobmp, Rect.new(0, 0, @infobmp.width, @infobmp.height))
-      # Shiny Icon
-      if pokemon.shiny?
-        @sprites["overlay"].bitmap.blt(spacing + (Graphics.width/8) + 52, Graphics.height/2 - 142,
-                          @shinybmp,Rect.new(0, 0, @shinybmp.width, @shinybmp.height))
-      end
+      # TODO use this space for pokerus?
+      # Shiny Icon 
+      #if pokemon.shiny?
+      #  @sprites["overlay"].bitmap.blt(spacing + (Graphics.width/8) + 52, Graphics.height/2 - 142,
+      #                    @shinybmp,Rect.new(0, 0, @shinybmp.width, @shinybmp.height))
+      # end
       # Item Icon
       if pokemon.hasItem?
         @sprites["overlay"].bitmap.blt(spacing + (Graphics.width/8) + 52, Graphics.height/2 - 116,

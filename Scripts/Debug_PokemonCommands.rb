@@ -118,8 +118,8 @@ MenuHandlers.add(:pokemon_debug_menu, :set_pokerus, {
     loop do
       pokerus = (pkmn.pokerus) ? pkmn.pokerus : 0
       msg = [_INTL("{1} doesn't have Pokérus.", pkmn.name),
-             _INTL("Has {1} strain {2}, infectious for {3} more ticks.", pokerus.plague ? "dangerous" : "benign", pokerus.strain, pokerus.step),
-             _INTL("Had strain {1}, not infectious.", pokerus.strain),
+             _INTL("Has {1} strain {2}, infectious for {3} more steps.", pokerus.plague ? "dangerous" : "benign", pokerus.strain, pokerus.step),
+             _INTL("Has strain {1}, not infectious.", pokerus.strain),
              _INTL("Has strain {1}, is not responsive", pokerus.strain)][pkmn.pokerusStage]
       cmd = screen.pbShowCommands(msg,
                                   [_INTL("Give safe strain"),
