@@ -8,7 +8,7 @@
 def pbPokerus?
   return false if $game_switches[Settings::SEEN_POKERUS_SWITCH]
   $player.party.each do |i|
-    return true if i.pokerusStage == 1
+    return true if i.isSymptomatic()
   end
   return false
 end
@@ -108,7 +108,7 @@ EventHandlers.add(:on_player_step_taken_can_transfer, :poison_party,
 EventHandlers.add(:on_player_step_taken_can_transfer, :pokerus_counter,
   proc {
     next if !$player
-    next if $PokemonGlobal.stepcount % 4 != 0
+    next if $PokemonGlobal.stepcount % 10 != 0
     $player.pokemon_party.each do |pkmn| 
       pkmn.lowerPokerusCount()
     end

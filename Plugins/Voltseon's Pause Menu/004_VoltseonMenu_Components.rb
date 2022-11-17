@@ -135,9 +135,9 @@ class PokemonPartyHud < Component
         status = GameData::Status.count - 1
       elsif pokemon.status != :NONE
         status = GameData::Status.get(pokemon.status).icon_position
-      elsif pokemon.pokerusStage == 1 || pokemon.pokerusStage == 3
+      elsif pokemon.isSymptomatic()
         # TODO, make this appear regardless
-        status = GameData::Status.count
+        status = GameData::Status.count - 1
       end
       if status >= 0
         statusrect = Rect.new(0,8*status,8,8)
