@@ -109,7 +109,9 @@ EventHandlers.add(:on_player_step_taken_can_transfer, :pokerus_counter,
   proc {
     next if !$player
     next if $PokemonGlobal.stepcount % 4 != 0
-    $player.pokemon_party.each { |pkmn| pkmn.lowerPokerusCount }
+    $player.pokemon_party.each do |pkmn| 
+      pkmn.lowerPokerusCount()
+    end
   }
 )
 

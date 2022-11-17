@@ -816,6 +816,7 @@ class Pokemon
     return if self.pokerusStage == 2   # Can't re-infect a cured Pokémon
     $stats.pokerus_infections += 1
     @pokerus.givePokerus(strain)
+    calc_stats()
   end
 
   # Gives this Pokémon Plaguérus (either the specified strain or a random one).
@@ -824,6 +825,7 @@ class Pokemon
     return if self.pokerusStage == 2   # Can't re-infect a cured Pokémon
     $stats.pokerus_infections += 1
     @pokerus.givePlague(strain)
+    calc_stats()
   end
 
   # Resets the infection time for this Pokémon's Pokérus (even if cured).
@@ -842,16 +844,19 @@ class Pokemon
   # Reduces the time remaining for this Pokémon's Pokérus (if infected).
   def lowerPokerusCount(count = 1)
     @pokerus.decreaseStep(count)
+    calc_stats()
   end
 
   # Cures this Pokémon's Pokérus (if infected).
   def curePokerus
     @pokerus.cure()
+    calc_stats()
   end
 
   # Removes this Pokémon's Pokérus (if infected).
   def clearPokerus
     @pokerus.clear()
+    calc_stats()
   end
 
   #=============================================================================
@@ -1137,14 +1142,15 @@ class Pokemon
         stats[s.id] = calcStat(base_stats[s.id], this_level, this_IV[s.id], @ev[s.id], nature_mod[s.id])
       end
     end
-    hp_difference = stats[:HP] - @totalhp
-    @totalhp = stats[:HP]
-    self.hp = [@hp + hp_difference, 1].max if @hp > 0 || hp_difference > 0
-    @attack  = stats[:ATTACK]
-    @defense = stats[:DEFENSE]
-    @spatk   = stats[:SPECIAL_ATTACK]
-    @spdef   = stats[:SPECIAL_DEFENSE]
-    @speed   = stats[:SPEED]
+    hp_difference = @totalhp - @hp
+    @totalhp = (stats[:HP] * @pokerus.severity).ceil()
+    @hp = @totalhp - hp_difference
+    @hp = @hp.clamp(0, @totalhp)
+    @attack  = (stats[:ATTACK] * @pokerus.severity).ceil()
+    @defense = (stats[:DEFENSE] * @pokerus.severity).ceil()
+    @spatk   = (stats[:SPECIAL_ATTACK] * @pokerus.severity).ceil()
+    @spdef   = (stats[:SPECIAL_DEFENSE] * @pokerus.severity).ceil()
+    @speed   = (stats[:SPEED] * @pokerus.severity).ceil()
   end
 
   #=============================================================================

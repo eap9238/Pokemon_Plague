@@ -54,6 +54,16 @@ class Pokemon
       @stage = 1
     end
 
+    def severity()
+      if @strain == 0 || @strain == 2 || !@plague
+        # Return perfect condition if safe strain, or if not infected/cured
+        return 1
+      else
+        # Return percentage of symptomatic time remaining
+        return (@step / (@strain * 100.0))
+      end
+    end
+
     def reset()
       @step = @strain * 100
       @incubation = @strain * 10

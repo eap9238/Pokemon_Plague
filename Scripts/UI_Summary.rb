@@ -637,20 +637,35 @@ class PokemonSummary_Scene
         statshadows[change[0]] = Color.new(64, 120, 152) if change[1] < 0
       end
     end
+
+    textColour = Color.new(64, 64, 64)
+    textShadow = Color.new(176, 176, 176)
+
+    if @pokemon.pokerus.severity <= 0.25
+      textColour = Color.new(248, 72, 72)
+      textShadow = Color.new(136, 48, 48)
+    elsif @pokemon.pokerus.severity <= 0.5
+      textColour = Color.new(248, 136, 32)
+      textShadow =Color.new(144, 72, 24)
+    elsif @pokemon.pokerus.severity <= 0.75
+      textColour = Color.new(248, 192, 0)
+      textShadow = Color.new(144, 104, 0)
+    end
+
     # Write various bits of text
     textpos = [
       [_INTL("HP"), 292, 82, 2, base, statshadows[:HP]],
-      [sprintf("%d/%d", @pokemon.hp, @pokemon.totalhp), 462, 82, 1, Color.new(64, 64, 64), Color.new(176, 176, 176)],
+      [sprintf("%d/%d", @pokemon.hp, @pokemon.totalhp), 462, 82, 1, textColour, textShadow],
       [_INTL("Attack"), 248, 126, 0, base, statshadows[:ATTACK]],
-      [sprintf("%d", @pokemon.attack), 456, 126, 1, Color.new(64, 64, 64), Color.new(176, 176, 176)],
+      [sprintf("%d", @pokemon.attack), 456, 126, 1, textColour, textShadow],
       [_INTL("Defense"), 248, 158, 0, base, statshadows[:DEFENSE]],
-      [sprintf("%d", @pokemon.defense), 456, 158, 1, Color.new(64, 64, 64), Color.new(176, 176, 176)],
+      [sprintf("%d", @pokemon.defense), 456, 158, 1, textColour, textShadow],
       [_INTL("Sp. Atk"), 248, 190, 0, base, statshadows[:SPECIAL_ATTACK]],
-      [sprintf("%d", @pokemon.spatk), 456, 190, 1, Color.new(64, 64, 64), Color.new(176, 176, 176)],
+      [sprintf("%d", @pokemon.spatk), 456, 190, 1, textColour, textShadow],
       [_INTL("Sp. Def"), 248, 222, 0, base, statshadows[:SPECIAL_DEFENSE]],
-      [sprintf("%d", @pokemon.spdef), 456, 222, 1, Color.new(64, 64, 64), Color.new(176, 176, 176)],
+      [sprintf("%d", @pokemon.spdef), 456, 222, 1, textColour, textShadow],
       [_INTL("Speed"), 248, 254, 0, base, statshadows[:SPEED]],
-      [sprintf("%d", @pokemon.speed), 456, 254, 1, Color.new(64, 64, 64), Color.new(176, 176, 176)],
+      [sprintf("%d", @pokemon.speed), 456, 254, 1, textColour, textShadow],
       [_INTL("Ability"), 224, 290, 0, base, shadow]
     ]
     # Draw ability name and description
