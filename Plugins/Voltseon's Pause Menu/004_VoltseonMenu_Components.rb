@@ -194,7 +194,7 @@ class DateAndTimeHud < Component
 end
 
 #-------------------------------------------------------------------------------
-# New Quesst Message Hud component
+# New Quest Message Hud component
 #-------------------------------------------------------------------------------
 class NewQuestHud < Component
   def initialize
