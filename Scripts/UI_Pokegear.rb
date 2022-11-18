@@ -200,3 +200,15 @@ MenuHandlers.add(:pokegear_menu, :jukebox, {
     next false
   }
 })
+
+  MenuHandlers.add(:pokegear_menu, :type, {
+    "name"      => _INTL("Type Lookup"),
+    "icon_name" => "typelookup",
+    "order"     => 40,
+    "effect"    => proc { |menu|
+      pbFadeOutIn {
+        pbTypeMatchUI
+      }
+      next false
+    }
+})

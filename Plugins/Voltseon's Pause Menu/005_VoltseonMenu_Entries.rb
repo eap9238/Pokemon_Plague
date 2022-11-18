@@ -279,15 +279,19 @@ class MenuEntryEncounterList < MenuEntry
 end
 
 #-------------------------------------------------------------------------------
-# Entry for Modern Quest System by ThatWelshOne
+# Entry for MQS
 #-------------------------------------------------------------------------------
 class MenuEntryQuests < MenuEntry
   def initialize
-    @icon = "menuDebug"
-    @name = "Quests"
+      @icon = "menuDebug"
+      @name = "Quests"
   end
 
-  def selected(menu); pbFadeOutIn(99999) { pbViewQuests }; end
+  def selected(menu)
+      pbFadeOutIn {
+        pbViewQuests
+      }
+  end
 
-  def selectable?; return defined?(hasAnyQuests?) && hasAnyQuests?; end
+  def selectable?; return hasAnyQuests?; end
 end
