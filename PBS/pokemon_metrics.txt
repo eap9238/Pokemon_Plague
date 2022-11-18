@@ -1331,8 +1331,6 @@ BackSprite = 0,8
 FrontSprite = 2,24
 ShadowX = 0
 ShadowSize = 1
-FrontSpriteScale = 1
-BackSpriteScale = 1
 #-------------------------------
 [CLEFFA]
 BackSprite = 0,58
