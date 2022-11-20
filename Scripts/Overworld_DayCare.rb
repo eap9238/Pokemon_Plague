@@ -445,6 +445,7 @@ class DayCare
       slot.deposit(pkmn)
       $player.party.delete_at(party_index)
       day_care.reset_egg_counters
+      FollowingPkmn.refresh()
       return
     end
     raise _INTL("No room to deposit a Pokémon.")
@@ -461,6 +462,7 @@ class DayCare
     $stats.day_care_levels_gained += slot.level_gain
     $player.party.push(slot.pokemon)
     slot.reset
+    FollowingPkmn.refresh()
     day_care.reset_egg_counters
   end
 

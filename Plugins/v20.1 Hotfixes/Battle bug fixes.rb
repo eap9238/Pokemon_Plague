@@ -115,6 +115,7 @@ module Battle::CatchAndStoreMixin
               $game_temp.party_critical_hits_dealt[idx] = nil
               $game_temp.party_direct_damage_taken[idx] = nil
             end
+            FollowingPkmn.refresh()
           end
           break
         when 1   # Send to a Box
