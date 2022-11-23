@@ -791,8 +791,8 @@ class Pokemon
   end
 
   # Returns the Pokérus infection stage for this Pokémon. The possible stages are
-  # 0 (not infected), 1 (infected) and 2 (cured).
-  # @return [0, 1, 2] current Pokérus infection stage
+  # 0 (not infected), 1 (infected) 2 (cured), and 3 (unresponsive)
+  # @return [0, 1, 2, 3] current Pokérus infection stage
   def pokerusStage
     return @pokerus.stage
   end
