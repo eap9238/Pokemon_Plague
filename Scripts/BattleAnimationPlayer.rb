@@ -29,8 +29,6 @@ class AnimFrame
   FOCUS      = 26
 end
 
-
-
 #===============================================================================
 #
 #===============================================================================
@@ -166,8 +164,6 @@ def pbConvertRPGAnimation(animation)
   return pbAnim
 end
 
-
-
 #===============================================================================
 #
 #===============================================================================
@@ -189,7 +185,8 @@ class RPG::Animation
     self.timings.push(timing)
   end
 
-  def addAnimation(otherAnim, frame, x, y)   # frame is zero-based
+  # frame is zero-based.
+  def addAnimation(otherAnim, frame, x, y)
     if frame + otherAnim.frames.length >= self.frames.length
       totalframes = frame + otherAnim.frames.length + 1
       (totalframes - self.frames.length).times do
@@ -230,8 +227,6 @@ class RPG::Animation
   end
 end
 
-
-
 #===============================================================================
 #
 #===============================================================================
@@ -268,7 +263,7 @@ class PBAnimTiming
     @colorAlpha    = nil
     @duration      = 5
     @flashScope    = 0
-    @flashColor    = Color.new(255, 255, 255, 255)
+    @flashColor    = Color.white
     @flashDuration = 5
   end
 
@@ -310,7 +305,7 @@ class PBAnimTiming
       text = sprintf("[%d] Set FG: \"%s\"", @frame + 1, name)
       text += sprintf(" (color=%s,%s,%s,%s)",
                       @colorRed || "-",
-                      @colorGreen | "-",
+                      @colorGreen || "-",
                       @colorBlue || "-",
                       @colorAlpha || "-")
       text += sprintf(" (opacity=%d)", @opacity)
@@ -332,8 +327,6 @@ class PBAnimTiming
     return ""
   end
 end
-
-
 
 #===============================================================================
 #
@@ -396,8 +389,6 @@ class PBAnimations < Array
     self.selected = len if self.selected >= len
   end
 end
-
-
 
 #===============================================================================
 #
@@ -482,6 +473,49 @@ class PBAnimation < Array
 
   def playTiming(frame, bgGraphic, bgColor, foGraphic, foColor, oldbg = [], oldfo = [], user = nil)
     @timing.each do |i|
+      next if !i.duration || i.duration <= 0
+      next if i.frame + i.duration < frame || i.frame >= frame
+      fraction = (frame - i.frame).to_f / i.duration
+      case i.timingType
+      when 2
+        if bgGraphic.bitmap.nil?
+          bgColor.opacity = oldbg[2] + ((i.opacity - oldbg[2]) * fraction) if i.opacity
+          cr = (i.colorRed) ? oldbg[3].red + ((i.colorRed - oldbg[3].red) * fraction) : oldbg[3].red
+          cg = (i.colorGreen) ? oldbg[3].green + ((i.colorGreen - oldbg[3].green) * fraction) : oldbg[3].green
+          cb = (i.colorBlue) ? oldbg[3].blue + ((i.colorBlue - oldbg[3].blue) * fraction) : oldbg[3].blue
+          ca = (i.colorAlpha) ? oldbg[3].alpha + ((i.colorAlpha - oldbg[3].alpha) * fraction) : oldbg[3].alpha
+          bgColor.color = Color.new(cr, cg, cb, ca)
+        else
+          bgGraphic.ox      = oldbg[0] - ((i.bgX - oldbg[0]) * fraction) if i.bgX
+          bgGraphic.oy      = oldbg[1] - ((i.bgY - oldbg[1]) * fraction) if i.bgY
+          bgGraphic.opacity = oldbg[2] + ((i.opacity - oldbg[2]) * fraction) if i.opacity
+          cr = (i.colorRed) ? oldbg[3].red + ((i.colorRed - oldbg[3].red) * fraction) : oldbg[3].red
+          cg = (i.colorGreen) ? oldbg[3].green + ((i.colorGreen - oldbg[3].green) * fraction) : oldbg[3].green
+          cb = (i.colorBlue) ? oldbg[3].blue + ((i.colorBlue - oldbg[3].blue) * fraction) : oldbg[3].blue
+          ca = (i.colorAlpha) ? oldbg[3].alpha + ((i.colorAlpha - oldbg[3].alpha) * fraction) : oldbg[3].alpha
+          bgGraphic.color = Color.new(cr, cg, cb, ca)
+        end
+      when 4
+        if foGraphic.bitmap.nil?
+          foColor.opacity = oldfo[2] + ((i.opacity - oldfo[2]) * fraction) if i.opacity
+          cr = (i.colorRed) ? oldfo[3].red + ((i.colorRed - oldfo[3].red) * fraction) : oldfo[3].red
+          cg = (i.colorGreen) ? oldfo[3].green + ((i.colorGreen - oldfo[3].green) * fraction) : oldfo[3].green
+          cb = (i.colorBlue) ? oldfo[3].blue + ((i.colorBlue - oldfo[3].blue) * fraction) : oldfo[3].blue
+          ca = (i.colorAlpha) ? oldfo[3].alpha + ((i.colorAlpha - oldfo[3].alpha) * fraction) : oldfo[3].alpha
+          foColor.color = Color.new(cr, cg, cb, ca)
+        else
+          foGraphic.ox      = oldfo[0] - ((i.bgX - oldfo[0]) * fraction) if i.bgX
+          foGraphic.oy      = oldfo[1] - ((i.bgY - oldfo[1]) * fraction) if i.bgY
+          foGraphic.opacity = oldfo[2] + ((i.opacity - oldfo[2]) * fraction) if i.opacity
+          cr = (i.colorRed) ? oldfo[3].red + ((i.colorRed - oldfo[3].red) * fraction) : oldfo[3].red
+          cg = (i.colorGreen) ? oldfo[3].green + ((i.colorGreen - oldfo[3].green) * fraction) : oldfo[3].green
+          cb = (i.colorBlue) ? oldfo[3].blue + ((i.colorBlue - oldfo[3].blue) * fraction) : oldfo[3].blue
+          ca = (i.colorAlpha) ? oldfo[3].alpha + ((i.colorAlpha - oldfo[3].alpha) * fraction) : oldfo[3].alpha
+          foGraphic.color = Color.new(cr, cg, cb, ca)
+        end
+      end
+    end
+    @timing.each do |i|
       next if i.frame != frame
       case i.timingType
       when 0   # Play SE
@@ -549,56 +583,8 @@ class PBAnimation < Array
         end
       end
     end
-    @timing.each do |i|
-      case i.timingType
-      when 2
-        next if !i.duration || i.duration <= 0
-        next if frame < i.frame || frame > i.frame + i.duration
-        fraction = (frame - i.frame).to_f / i.duration
-        if bgGraphic.bitmap.nil?
-          bgColor.opacity = oldbg[2] + ((i.opacity - oldbg[2]) * fraction) if i.opacity
-          cr = (i.colorRed) ? oldbg[3].red + ((i.colorRed - oldbg[3].red) * fraction) : oldbg[3].red
-          cg = (i.colorGreen) ? oldbg[3].green + ((i.colorGreen - oldbg[3].green) * fraction) : oldbg[3].green
-          cb = (i.colorBlue) ? oldbg[3].blue + ((i.colorBlue - oldbg[3].blue) * fraction) : oldbg[3].blue
-          ca = (i.colorAlpha) ? oldbg[3].alpha + ((i.colorAlpha - oldbg[3].alpha) * fraction) : oldbg[3].alpha
-          bgColor.color = Color.new(cr, cg, cb, ca)
-        else
-          bgGraphic.ox      = oldbg[0] - ((i.bgX - oldbg[0]) * fraction) if i.bgX
-          bgGraphic.oy      = oldbg[1] - ((i.bgY - oldbg[1]) * fraction) if i.bgY
-          bgGraphic.opacity = oldbg[2] + ((i.opacity - oldbg[2]) * fraction) if i.opacity
-          cr = (i.colorRed) ? oldbg[3].red + ((i.colorRed - oldbg[3].red) * fraction) : oldbg[3].red
-          cg = (i.colorGreen) ? oldbg[3].green + ((i.colorGreen - oldbg[3].green) * fraction) : oldbg[3].green
-          cb = (i.colorBlue) ? oldbg[3].blue + ((i.colorBlue - oldbg[3].blue) * fraction) : oldbg[3].blue
-          ca = (i.colorAlpha) ? oldbg[3].alpha + ((i.colorAlpha - oldbg[3].alpha) * fraction) : oldbg[3].alpha
-          bgGraphic.color = Color.new(cr, cg, cb, ca)
-        end
-      when 4
-        next if !i.duration || i.duration <= 0
-        next if frame < i.frame || frame > i.frame + i.duration
-        fraction = (frame - i.frame).to_f / i.duration
-        if foGraphic.bitmap.nil?
-          foColor.opacity = oldfo[2] + ((i.opacity - oldfo[2]) * fraction) if i.opacity
-          cr = (i.colorRed) ? oldfo[3].red + ((i.colorRed - oldfo[3].red) * fraction) : oldfo[3].red
-          cg = (i.colorGreen) ? oldfo[3].green + ((i.colorGreen - oldfo[3].green) * fraction) : oldfo[3].green
-          cb = (i.colorBlue) ? oldfo[3].blue + ((i.colorBlue - oldfo[3].blue) * fraction) : oldfo[3].blue
-          ca = (i.colorAlpha) ? oldfo[3].alpha + ((i.colorAlpha - oldfo[3].alpha) * fraction) : oldfo[3].alpha
-          foColor.color = Color.new(cr, cg, cb, ca)
-        else
-          foGraphic.ox      = oldfo[0] - ((i.bgX - oldfo[0]) * fraction) if i.bgX
-          foGraphic.oy      = oldfo[1] - ((i.bgY - oldfo[1]) * fraction) if i.bgY
-          foGraphic.opacity = oldfo[2] + ((i.opacity - oldfo[2]) * fraction) if i.opacity
-          cr = (i.colorRed) ? oldfo[3].red + ((i.colorRed - oldfo[3].red) * fraction) : oldfo[3].red
-          cg = (i.colorGreen) ? oldfo[3].green + ((i.colorGreen - oldfo[3].green) * fraction) : oldfo[3].green
-          cb = (i.colorBlue) ? oldfo[3].blue + ((i.colorBlue - oldfo[3].blue) * fraction) : oldfo[3].blue
-          ca = (i.colorAlpha) ? oldfo[3].alpha + ((i.colorAlpha - oldfo[3].alpha) * fraction) : oldfo[3].alpha
-          foGraphic.color = Color.new(cr, cg, cb, ca)
-        end
-      end
-    end
   end
 end
-
-
 
 #===============================================================================
 #
@@ -678,8 +664,6 @@ def pbSpriteSetAnimFrame(sprite, frame, user = nil, target = nil, inEditor = fal
   end
 end
 
-
-
 #===============================================================================
 # Animation player
 #===============================================================================
@@ -700,8 +684,9 @@ class PBAnimationPlayerX
     @inEditor      = inEditor
     @looping       = false
     @animbitmap    = nil   # Animation sheet graphic
+    @old_frame     = -1
     @frame         = -1
-    @framesPerTick = [Graphics.frame_rate / 20, 1].max   # 20 ticks per second
+    @timer_start   = nil
     @srcLine       = nil
     @dstLine       = nil
     @userOrig      = getSpriteCenter(@usersprite)
@@ -722,7 +707,7 @@ class PBAnimationPlayerX
       @animsprites[i].visible = false
     end
     # Create background colour sprite
-    @bgColor = ColoredPlane.new(Color.new(0, 0, 0), @viewport)
+    @bgColor = ColoredPlane.new(Color.black, @viewport)
     @bgColor.z       = 5
     @bgColor.opacity = 0
     @bgColor.refresh
@@ -733,7 +718,7 @@ class PBAnimationPlayerX
     @bgGraphic.opacity = 0
     @bgGraphic.refresh
     # Create foreground colour sprite
-    @foColor = ColoredPlane.new(Color.new(0, 0, 0), @viewport)
+    @foColor = ColoredPlane.new(Color.black, @viewport)
     @foColor.z       = 85
     @foColor.opacity = 0
     @foColor.refresh
@@ -747,9 +732,7 @@ class PBAnimationPlayerX
 
   def dispose
     @animbitmap&.dispose
-    (2...MAX_SPRITES).each do |i|
-      @animsprites[i]&.dispose
-    end
+    (2...MAX_SPRITES).each { |i| @animsprites[i]&.dispose }
     @bgGraphic.dispose
     @bgColor.dispose
     @foGraphic.dispose
@@ -769,6 +752,7 @@ class PBAnimationPlayerX
 
   def start
     @frame = 0
+    @timer_start = System.uptime
   end
 
   def animDone?
@@ -782,18 +766,20 @@ class PBAnimationPlayerX
 
   def update
     return if @frame < 0
-    animFrame = @frame / @framesPerTick
-
+    @frame = ((System.uptime - @timer_start) * 20).to_i
     # Loop or end the animation if the animation has reached the end
-    if animFrame >= @animation.length
-      @frame = (@looping) ? 0 : -1
-      if @frame < 0
+    if @frame >= @animation.length
+      if @looping
+        @frame %= @animation.length
+        @timer_start += @animation.length / 20.0
+      else
+        @frame = -1
         @animbitmap&.dispose
         @animbitmap = nil
         return
       end
     end
-    # Load the animation's spritesheet and assign it to all the sprites.
+    # Load the animation's spritesheet and assign it to all the sprites
     if !@animbitmap || @animbitmap.disposed?
       @animbitmap = AnimatedBitmap.new("Graphics/Animations/" + @animation.graphic,
                                        @animation.hue).deanimate
@@ -806,57 +792,53 @@ class PBAnimationPlayerX
     @bgColor.update
     @foGraphic.update
     @foColor.update
-
     # Update all the sprites to depict the animation's next frame
-    if @framesPerTick == 1 || (@frame % @framesPerTick) == 0
-      thisframe = @animation[animFrame]
-      # Make all cel sprites invisible
-      MAX_SPRITES.times do |i|
-        @animsprites[i].visible = false if @animsprites[i]
+    return if @frame == @old_frame
+    @old_frame = @frame
+    thisframe = @animation[@frame]
+    # Make all cel sprites invisible
+    MAX_SPRITES.times { |i| @animsprites[i].visible = false if @animsprites[i] }
+    # Set each cel sprite acoordingly
+    thisframe.length.times do |i|
+      cel = thisframe[i]
+      next if !cel
+      sprite = @animsprites[i]
+      next if !sprite
+      # Set cel sprite's graphic
+      case cel[AnimFrame::PATTERN]
+      when -1
+        sprite.bitmap = @userbitmap
+      when -2
+        sprite.bitmap = @targetbitmap
+      else
+        sprite.bitmap = @animbitmap
       end
-      # Set each cel sprite acoordingly
-      thisframe.length.times do |i|
-        cel = thisframe[i]
-        next if !cel
-        sprite = @animsprites[i]
-        next if !sprite
-        # Set cel sprite's graphic
-        case cel[AnimFrame::PATTERN]
-        when -1
-          sprite.bitmap = @userbitmap
-        when -2
-          sprite.bitmap = @targetbitmap
-        else
-          sprite.bitmap = @animbitmap
+      # Apply settings to the cel sprite
+      pbSpriteSetAnimFrame(sprite, cel, @usersprite, @targetsprite)
+      case cel[AnimFrame::FOCUS]
+      when 1   # Focused on target
+        sprite.x = cel[AnimFrame::X] + @targetOrig[0] - Battle::Scene::FOCUSTARGET_X
+        sprite.y = cel[AnimFrame::Y] + @targetOrig[1] - Battle::Scene::FOCUSTARGET_Y
+      when 2   # Focused on user
+        sprite.x = cel[AnimFrame::X] + @userOrig[0] - Battle::Scene::FOCUSUSER_X
+        sprite.y = cel[AnimFrame::Y] + @userOrig[1] - Battle::Scene::FOCUSUSER_Y
+      when 3   # Focused on user and target
+        next if !@srcLine || !@dstLine
+        point = transformPoint(@srcLine[0], @srcLine[1], @srcLine[2], @srcLine[3],
+                               @dstLine[0], @dstLine[1], @dstLine[2], @dstLine[3],
+                               sprite.x, sprite.y)
+        sprite.x = point[0]
+        sprite.y = point[1]
+        if isReversed(@srcLine[0], @srcLine[2], @dstLine[0], @dstLine[2]) &&
+           cel[AnimFrame::PATTERN] >= 0
+          # Reverse direction
+          sprite.mirror = !sprite.mirror
         end
-        # Apply settings to the cel sprite
-        pbSpriteSetAnimFrame(sprite, cel, @usersprite, @targetsprite)
-        case cel[AnimFrame::FOCUS]
-        when 1   # Focused on target
-          sprite.x = cel[AnimFrame::X] + @targetOrig[0] - Battle::Scene::FOCUSTARGET_X
-          sprite.y = cel[AnimFrame::Y] + @targetOrig[1] - Battle::Scene::FOCUSTARGET_Y
-        when 2   # Focused on user
-          sprite.x = cel[AnimFrame::X] + @userOrig[0] - Battle::Scene::FOCUSUSER_X
-          sprite.y = cel[AnimFrame::Y] + @userOrig[1] - Battle::Scene::FOCUSUSER_Y
-        when 3   # Focused on user and target
-          next if !@srcLine || !@dstLine
-          point = transformPoint(@srcLine[0], @srcLine[1], @srcLine[2], @srcLine[3],
-                                 @dstLine[0], @dstLine[1], @dstLine[2], @dstLine[3],
-                                 sprite.x, sprite.y)
-          sprite.x = point[0]
-          sprite.y = point[1]
-          if isReversed(@srcLine[0], @srcLine[2], @dstLine[0], @dstLine[2]) &&
-             cel[AnimFrame::PATTERN] >= 0
-            # Reverse direction
-            sprite.mirror = !sprite.mirror
-          end
-        end
-        sprite.x += 64 if @inEditor
-        sprite.y += 64 if @inEditor
       end
-      # Play timings
-      @animation.playTiming(animFrame, @bgGraphic, @bgColor, @foGraphic, @foColor, @oldbg, @oldfo, @user)
+      sprite.x += 64 if @inEditor
+      sprite.y += 64 if @inEditor
     end
-    @frame += 1
+    # Play timings
+    @animation.playTiming(@frame, @bgGraphic, @bgColor, @foGraphic, @foColor, @oldbg, @oldfo, @user)
   end
 end

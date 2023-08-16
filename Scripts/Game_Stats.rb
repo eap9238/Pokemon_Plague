@@ -5,6 +5,7 @@ class GameStats
   # Travel
   attr_accessor :distance_walked, :distance_cycled, :distance_surfed   # surfed includes diving
   attr_accessor :distance_slid_on_ice   # Also counted in distance_walked
+  attr_accessor :bump_count   # Times the player walked into something
   attr_accessor :cycle_count, :surf_count, :dive_count
   # Field actions
   attr_accessor :fly_count, :cut_count, :flash_count
@@ -45,7 +46,7 @@ class GameStats
   attr_accessor :mart_items_bought, :premier_balls_earned
   attr_accessor :drinks_bought, :drinks_won   # From vending machines
   attr_accessor :coins_won, :coins_lost   # Not bought, not spent
-  attr_accessor :battle_points_won, :battle_points_spent   # Currently unused
+  attr_accessor :battle_points_won, :battle_points_spent
   attr_accessor :soot_collected
   # Special stats
   attr_accessor :gym_leader_attempts   # An array of integers
@@ -56,7 +57,7 @@ class GameStats
   attr_accessor :safari_pokemon_caught, :most_captures_per_safari_game
   attr_accessor :bug_contest_count, :bug_contest_wins
   # Play
-  attr_accessor :play_time   # In seconds
+  attr_writer   :play_time   # In seconds; the reader also updates the value
   attr_accessor :play_sessions
   attr_accessor :time_last_saved   # In seconds
 
@@ -66,6 +67,7 @@ class GameStats
     @distance_cycled               = 0
     @distance_surfed               = 0
     @distance_slid_on_ice          = 0
+    @bump_count                    = 0
     @cycle_count                   = 0
     @surf_count                    = 0
     @dive_count                    = 0
@@ -161,38 +163,38 @@ class GameStats
   end
 
   def set_time_to_badge(number)
-    @times_to_get_badges[number] = @play_time
+    @times_to_get_badges[number] = play_time
   end
 
   def set_time_to_hall_of_fame
-    @time_to_enter_hall_of_fame = @play_time
+    @time_to_enter_hall_of_fame = play_time if @time_to_enter_hall_of_fame == 0
+  end
+
+  def play_time
+    if $game_temp&.last_uptime_refreshed_play_time
+      now = System.uptime
+      @play_time += now - $game_temp.last_uptime_refreshed_play_time
+      $game_temp.last_uptime_refreshed_play_time = now
+    end
+    return @play_time
   end
 
   def play_time_per_session
-    return @play_time / @play_sessions
+    return play_time / @play_sessions
   end
 
   def set_time_last_saved
-    @time_last_saved = @play_time
+    @time_last_saved = play_time
   end
 
   def time_since_last_save
-    return @play_time - @time_last_saved
+    return play_time - @time_last_saved
   end
 end
 
 #===============================================================================
 #
 #===============================================================================
-module Graphics
-  unless defined?(update_stats_play_time)
-    class << Graphics
-      alias update_stats_play_time update
-    end
-  end
-
-  def self.update
-    update_stats_play_time
-    $stats.play_time += self.delta_s if $stats && $PokemonEncounters
-  end
+class Game_Temp
+  attr_accessor :last_uptime_refreshed_play_time
 end

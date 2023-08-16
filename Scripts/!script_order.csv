@@ -41,7 +41,6 @@ Game_Screen
 Game_System
 Game_Picture
 Game_Map
-Game_Map_Autoscroll
 Game_MapFactory
 Game_Character
 Game_Event
@@ -67,9 +66,7 @@ Spriteset_Global
 Spriteset_Map
 Sprite_AnimationSprite
 Sprite_DynamicShadows
-ParticleEngine
 PictureEx
-Interpolators
 ScreenPosHelper
 ==================~blank
 [[ Map renderer ]]~blank
@@ -85,7 +82,7 @@ Window
 SpriteWindow
 SpriteWindow_text
 SpriteWindow_pictures
-SpriteWrapper
+BitmapSprite
 AnimatedBitmap
 Planes
 DrawText
@@ -124,14 +121,14 @@ Target
 
 [[ PBS data ]]~blank
 MiscPBSData
-PhoneDatabase
+TownMap
 Type
 Ability
 Move
 Item
 BerryPlant
 Species
-Species_Files
+Species_files
 SpeciesMetrics
 ShadowPokemon
 Ribbon
@@ -141,6 +138,9 @@ Trainer
 Metadata
 PlayerMetadata
 MapMetadata
+DungeonTileset
+DungeonParameters
+PhoneMessage
 ==================~blank
 [[ Battle ]]~blank
 
@@ -197,13 +197,27 @@ Battle_DebugScene
 
 [[ AI ]]~blank
 Battle_AI
-AI_Item
 AI_Switch
-AI_Move
-AI_Move_EffectScores_1
-AI_Move_EffectScores_2
-AI_Move_EffectScores_3
-AI_Move_Utilities
+AI_UseItem
+AI_MegaEvolve
+AI_ChooseMove
+AI_ChooseMove_GenericEffects
+AI_ChooseMove_OtherScores
+AI_Utilities
+AITrainer
+AIBattler
+AIMove
+
+[[ AI MoveEffects ]]~blank
+AI_MoveEffects_Misc
+AI_MoveEffects_BattlerStats
+AI_MoveEffects_BattlerOther
+AI_MoveEffects_MoveAttributes
+AI_MoveEffects_MultiHit
+AI_MoveEffects_Healing
+AI_MoveEffects_Items
+AI_MoveEffects_ChangeMoveEffect
+AI_MoveEffects_SwitchingActing
 
 [[ Other battle code ]]~blank
 PBEffects
@@ -298,6 +312,7 @@ UI_PokemonStorage
 UI_ItemStorage
 UI_PC
 UI_PokeMart
+UI_BattlePointShop
 UI_MoveRelearner
 UI_PurifyChamber
 UI_MysteryGift

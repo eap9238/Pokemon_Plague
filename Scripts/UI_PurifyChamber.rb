@@ -27,7 +27,7 @@ end
 #===============================================================================
 def pbDrawGauge(bitmap, rect, color, value, maxValue)
   return if !bitmap
-  bitmap.fill_rect(rect.x, rect.y, rect.width, rect.height, Color.new(0, 0, 0))
+  bitmap.fill_rect(rect.x, rect.y, rect.width, rect.height, Color.black)
   width = (maxValue <= 0) ? 0 : (rect.width - 4) * value / maxValue
   if rect.width >= 4 && rect.height >= 4
     bitmap.fill_rect(rect.x + 2, rect.y + 2, rect.width - 4, rect.height - 4, Color.new(248, 248, 248))
@@ -35,11 +35,12 @@ def pbDrawGauge(bitmap, rect, color, value, maxValue)
   end
 end
 
-def calcPoint(x, y, distance, angle) # angle in degrees
-  angle -= (angle / 360.0).floor * 360 # normalize
-  angle = (angle / 360.0) * (2 * Math::PI) # convert to radians
-  angle = -angle % (2 * Math::PI) # normalize radians
-  point = [(Math.cos(angle) * distance), (Math.sin(angle) * distance)]
+# angle is in degrees.
+def calcPoint(x, y, distance, angle)
+  angle -= (angle / 360.0).floor * 360   # normalize
+  angle = (angle / 360.0) * (2 * Math::PI)   # convert to radians
+  angle = -angle % (2 * Math::PI)   # normalize radians
+  point = [distance * Math.cos(angle), distance * Math.sin(angle)]
   point[0] += x
   point[1] += y
   return point
@@ -66,15 +67,11 @@ class PurifyChamberSet
   end
 
   def facing=(value)
-    if value >= 0 && value < @list.length
-      @facing = value
-    end
+    @facing = value if value >= 0 && value < @list.length
   end
 
   def shadow=(value)
-    if value.nil? || value.shadowPokemon?
-      @shadow = value
-    end
+    @shadow = value if value.nil? || value.shadowPokemon?
   end
 
   # Main component is tempo
@@ -141,17 +138,17 @@ class PurifyChamberSet
   end
 
   # Purify Chamber treats Normal/Normal matchup as super effective
-  def self.typeAdvantage(p1, p2)
-    return true if p1 == :NORMAL && p2 == :NORMAL
-    return Effectiveness.super_effective_type?(p1, p2)
+  def self.typeAdvantage(type1, type2)
+    return true if type1 == :NORMAL && type2 == :NORMAL
+    return Effectiveness.super_effective_type?(type1, type2)
   end
 
-  def self.isSuperEffective(p1, p2)
-    return true if typeAdvantage(p1.types[0], p2.types[0])
-    return true if p2.types[1] && typeAdvantage(p1.types[0], p2.types[1])
-    return false if p1.types[1].nil?
-    return true if typeAdvantage(p1.types[1], p2.types[0])
-    return true if p2.types[1] && typeAdvantage(p1.types[1], p2.types[1])
+  def self.isSuperEffective(pkmn1, pkmn2)
+    pkmn1.types.each do |type1|
+      pkmn2.types.each do |type2|
+        return true if typeAdvantage(type1, type2)
+      end
+    end
     return false
   end
 end
@@ -166,7 +163,8 @@ class PurifyChamber
   NUMSETS = 9
   SETSIZE = 4
 
-  def self.maximumTempo   # Calculates the maximum possible tempo
+  # Calculates the maximum possible tempo.
+  def self.maximumTempo
     x = SETSIZE + 1
     return (((x * x) + x) / 2) - 1
   end
@@ -191,7 +189,8 @@ class PurifyChamber
     return @sets[set].list
   end
 
-  def chamberFlow(chamber)   # for speeding up purification
+  # For speeding up purification.
+  def chamberFlow(chamber)
     return 0 if chamber < 0 || chamber >= NUMSETS
     return @sets[chamber].flow
   end
@@ -201,7 +200,8 @@ class PurifyChamber
     return @sets[chamber].shadow
   end
 
-  def setShadow(chamber, value)   # allow only "shadow" Pokemon
+  # Allow only Shadow Pokemon.
+  def setShadow(chamber, value)
     return if chamber < 0 || chamber >= NUMSETS
     @sets[chamber].shadow = value
   end
@@ -225,9 +225,7 @@ class PurifyChamber
   end
 
   def [](chamber, slot = nil)
-    if slot.nil?
-      return @sets[chamber]
-    end
+    return @sets[chamber] if slot.nil?
     return nil if chamber < 0 || chamber >= NUMSETS
     return nil if slot < 0 || slot >= SETSIZE
     return @sets[chamber][slot]
@@ -430,8 +428,8 @@ class PurifyChamberScreen
       # array[0]==1 - a new set was chosen
       # array[0]==2 - choose Pokemon command
       cmd = @scene.pbSetScreen
-      if cmd[0] == 0
-        # Place Pokemon in the set
+      case cmd[0]
+      when 0   # Place Pokemon in the set
         curpkmn = PurifyChamberHelper.pbGetPokemon(@chamber, cmd[1])
         if curpkmn || heldpkmn
           commands = [_INTL("MOVE"), _INTL("SUMMARY"), _INTL("WITHDRAW")]
@@ -475,7 +473,7 @@ class PurifyChamberScreen
             @scene.pbSummary(cmd[1], heldpkmn)
           elsif choice == 2
             if pbBoxesFull?
-              @scene.pbDisplay("All boxes are full.")
+              @scene.pbDisplay(_INTL("All boxes are full."))
             elsif heldpkmn
               @scene.pbWithdraw(cmd[1], heldpkmn)
               $PokemonStorage.pbStoreCaught(heldpkmn)
@@ -513,7 +511,7 @@ class PurifyChamberScreen
               end
             end
           end
-        else  # No current Pokemon
+        else   # No current Pokemon
           pos = @scene.pbChoosePokemon
           if pbPlacePokemon(pos, cmd[1])
             curpkmn = PurifyChamberHelper.pbGetPokemon(@chamber, cmd[1])
@@ -521,25 +519,23 @@ class PurifyChamberScreen
             @scene.pbPositionHint(PurifyChamberHelper.adjustOnInsert(cmd[1]))
           end
         end
-      elsif cmd[0] == 1 # Change the active set
+      when 1   # Change the active set
         @scene.pbChangeSet(cmd[1])
         chamber.currentSet = cmd[1]
-      elsif cmd[0] == 2 # Choose a Pokemon
+      when 2   # Choose a Pokemon
         pos = @scene.pbChoosePokemon
         pkmn = pos ? $PokemonStorage[pos[0], pos[1]] : nil
         heldpkmn = pkmn if pkmn
-      else # cancel
+      else   # cancel
         if heldpkmn
-          @scene.pbDisplay("You're holding a Pokémon!")
+          @scene.pbDisplay(_INTL("You're holding a Pokémon!"))
         else
-          if !@scene.pbConfirm("Continue editing sets?")
-            break
-          end
+          break if !@scene.pbConfirm(_INTL("Continue editing sets?"))
         end
       end
     end
     if pbCheckPurify
-      @scene.pbDisplay(_INTL("There is a Pokémon that is ready to open its heart!\1"))
+      @scene.pbDisplay(_INTL("There is a Pokémon that is ready to open its heart!") + "\1")
       @scene.pbCloseSetDetail
       pbDoPurify
       return false
@@ -587,8 +583,8 @@ class PurifyChamberScreen
       pbStorePokemon(@chamber[set].shadow)
       @chamber.setShadow(set, nil) # Remove shadow Pokemon from set
       if (i + 1) != purifiables.length
-        @scene.pbDisplay(_INTL("There is another Pokémon that is ready to open its heart!"))
-        if !@scene.pbConfirm("Would you like to switch sets?")
+        @scene.pbDisplay(_INTL("There is another Pokémon that is ready to open its heart!") + "\1")
+        if !@scene.pbConfirm(_INTL("Would you like to switch sets?"))
           @scene.pbCloseSet
           break
         end
@@ -609,18 +605,14 @@ class PurifyChamberScreen
     loop do
       set = @scene.pbChooseSet
       if set < 0
-        if !@scene.pbConfirm("Continue viewing holograms?")
-          break
-        end
+        break if !@scene.pbConfirm(_INTL("Continue viewing holograms?"))
       else
         chamber.currentSet = set
         cmd = @scene.pbShowCommands(_INTL("What do you want to do?"),
                                     [_INTL("EDIT"), _INTL("SWITCH"), _INTL("CANCEL")])
         case cmd
         when 0   # edit
-          if !pbOpenSetDetail
-            break
-          end
+          break if !pbOpenSetDetail
         when 1   # switch
           chamber.currentSet = set
           newSet = @scene.pbSwitch(set)
@@ -660,9 +652,9 @@ class Window_PurifyChamberSets < Window_DrawableCommand
     textpos = []
     rect = drawCursor(index, rect)
     if index == @switching
-      textpos.push([(index + 1).to_s, rect.x, rect.y, false, Color.new(248, 0, 0), self.shadowColor])
+      textpos.push([(index + 1).to_s, rect.x, rect.y, :left, Color.new(248, 0, 0), self.shadowColor])
     else
-      textpos.push([(index + 1).to_s, rect.x, rect.y, false, self.baseColor, self.shadowColor])
+      textpos.push([(index + 1).to_s, rect.x, rect.y, :left, self.baseColor, self.shadowColor])
     end
     if @chamber.setCount(index) > 0
       pbDrawGauge(self.contents, Rect.new(rect.x + 16, rect.y + 6, 48, 8),
@@ -682,6 +674,9 @@ end
 #
 #===============================================================================
 class DirectFlowDiagram
+  # Distance travelled by a dot in 1 second.
+  DOT_SPEED = 80
+
   def initialize(viewport = nil)
     @points = []
     @angles = []
@@ -693,27 +688,31 @@ class DirectFlowDiagram
     @distance = 96
   end
 
-# 0=none, 1=weak, 2=strong
+  def dispose
+    @points.each { |point| point.dispose }
+  end
+
+  # 0=none, 1=weak, 2=strong
   def setFlowStrength(strength)
     @strength = strength
   end
 
   def visible=(value)
-    @points.each do |point|
-      point.visible = value
-    end
+    @points.each { |point| point.visible = value }
   end
 
-  def dispose
-    @points.each do |point|
-      point.dispose
-    end
+  def color=(value)
+    @points.each { |point| point.color = value }
+  end
+
+  def setAngle(angle1)
+    @angle = angle1 - ((angle1 / 360).floor * 360)
   end
 
   def ensurePoint(j)
     if !@points[j] || @points[j].disposed?
       @points[j] = BitmapSprite.new(8, 8, @viewport)
-      @points[j].bitmap.fill_rect(0, 0, 8, 8, Color.new(0, 0, 0))
+      @points[j].bitmap.fill_rect(0, 0, 8, 8, Color.black)
     end
     @points[j].tone = (@strength == 2) ? Tone.new(232, 232, 248) : Tone.new(16, 16, 232)
     @points[j].visible = (@strength != 0)
@@ -737,18 +736,9 @@ class DirectFlowDiagram
       end
       i += (@strength == 2) ? 16 : 32
     end
-    @offset += (@strength == 2) ? 3 : 2
-    @offset %= @distance
-  end
-
-  def color=(value)
-    @points.each do |point|
-      point.color = value
-    end
-  end
-
-  def setAngle(angle1)
-    @angle = angle1 - ((angle1 / 360).floor * 360)
+    offset_delta = System.uptime * DOT_SPEED
+    offset_delta *= 1.5 if @strength == 2
+    @offset = offset_delta % @distance
   end
 end
 
@@ -756,6 +746,9 @@ end
 #
 #===============================================================================
 class FlowDiagram
+  # Distance travelled by a dot in 1 second.
+  DOT_SPEED = 80
+
   def initialize(viewport = nil)
     @points = []
     @angles = []
@@ -767,30 +760,39 @@ class FlowDiagram
     @distance = 96
   end
 
-# 0=none, 1=weak, 2=strong
-  def setFlowStrength(strength)
-    @strength = strength
+  def dispose
+    @points.each { |point| point.dispose }
   end
 
   def visible=(value)
-    @points.each do |point|
-      point.visible = value
-    end
+    @points.each { |point| point.visible = value }
   end
 
-  def dispose
-    @points.each do |point|
-      point.dispose
-    end
+  def color=(value)
+    @points.each { |point| point.color = value }
+  end
+
+  # 0=none, 1=weak, 2=strong
+  def setFlowStrength(strength)
+    @strength = strength
   end
 
   def ensurePoint(j)
     if !@points[j] || @points[j].disposed?
       @points[j] = BitmapSprite.new(8, 8, @viewport)
-      @points[j].bitmap.fill_rect(0, 0, 8, 8, Color.new(0, 0, 0))
+      @points[j].bitmap.fill_rect(0, 0, 8, 8, Color.black)
     end
     @points[j].tone = (@strength == 2) ? Tone.new(232, 232, 248) : Tone.new(16, 16, 232)
     @points[j].visible = (@strength != 0)
+  end
+
+  def setRange(angle1, angle2)
+    @startAngle = angle1 - ((angle1 / 360).floor * 360)
+    @endAngle = angle2 - ((angle2 / 360).floor * 360)
+    if @startAngle == @endAngle && angle1 != angle2
+      @startAngle = 0
+      @endAngle = 359.99
+    end
   end
 
   def withinRange(angle, startAngle, endAngle)
@@ -820,23 +822,9 @@ class FlowDiagram
       end
       i += (@strength == 2) ? 10 : 20
     end
-    @offset -= (@strength == 2) ? 3 : 2
-    @offset %= (360 * 6)
-  end
-
-  def color=(value)
-    @points.each do |point|
-      point.color = value
-    end
-  end
-
-  def setRange(angle1, angle2)
-    @startAngle = angle1 - ((angle1 / 360).floor * 360)
-    @endAngle = angle2 - ((angle2 / 360).floor * 360)
-    if @startAngle == @endAngle && angle1 != angle2
-      @startAngle = 0
-      @endAngle = 359.99
-    end
+    offset_delta = -System.uptime * DOT_SPEED
+    offset_delta *= 1.5 if @strength == 2
+    @offset = offset_delta % (360 * 6)
   end
 end
 
@@ -854,7 +842,7 @@ class PurifyChamberSetView < Sprite
     @heldpkmn = nil
     @cursor = -1
     @view = BitmapSprite.new(64, 64, viewport)
-    @view.bitmap.fill_rect(8, 8, 48, 48, Color.new(255, 255, 255))
+    @view.bitmap.fill_rect(8, 8, 48, 48, Color.white)
     @view.bitmap.fill_rect(10, 10, 44, 44, Color.new(255, 255, 255, 128))
     @info = BitmapSprite.new(Graphics.width - 112, 48, viewport)
     @flows = []
@@ -880,11 +868,9 @@ class PurifyChamberSetView < Sprite
     end
     setcount = @chamber.setCount(@set)
     setcount.times do |i|
-      if !@flows[i]
-        @flows[i] = FlowDiagram.new(self.viewport)
-      end
+      @flows[i] = FlowDiagram.new(self.viewport) if !@flows[i]
       angle = 360 - (i * 360 / setcount)
-      angle += 90 # start at 12 not 3 o'clock
+      angle += 90   # start at 12 not 3 o'clock
       endAngle = angle - (360 / setcount)
       @flows[i].setRange(endAngle, angle)
       @flows[i].setFlowStrength(@chamber[@set].affinity(i))
@@ -927,20 +913,18 @@ class PurifyChamberSetView < Sprite
       if pos.nil?
         @cursor = 0
       else
-        pos -= (pos / points).floor * points # modulus
+        pos -= (pos / points).floor * points   # modulus
         pos *= 2 if @chamber.setCount(@set) == PurifyChamber::SETSIZE
         @cursor = pos + 1
       end
     end
-    if @cursor != oldcursor
-      refresh
-    end
+    refresh if @cursor != oldcursor
   end
 
   def checkCursor(index)
     if @cursor == index
-      @view.x = @__sprites[index].x - @view.bitmap.width / 2
-      @view.y = @__sprites[index].y - @view.bitmap.height / 2
+      @view.x = @__sprites[index].x - (@view.bitmap.width / 2)
+      @view.y = @__sprites[index].y - (@view.bitmap.height / 2)
       @view.visible = true
     end
   end
@@ -952,17 +936,14 @@ class PurifyChamberSetView < Sprite
     pbSetSmallFont(@info.bitmap)
     textpos = []
     if pkmn
-      if pkmn.types.length == 1
-        textpos.push([_INTL("{1}  Lv.{2}  {3}", pkmn.name, pkmn.level,
-                            GameData::Type.get(pkmn.types[0]).name),
-                      2, 6, 0, Color.new(248, 248, 248), Color.new(128, 128, 128)])
-      else
-        textpos.push([_INTL("{1}  Lv.{2}  {3}/{4}", pkmn.name, pkmn.level,
-                            GameData::Type.get(pkmn.types[0]).name,
-                            GameData::Type.get(pkmn.types[1]).name),
-                      2, 6, 0, Color.new(248, 248, 248), Color.new(128, 128, 128)])
+      type_string = ""
+      pkmn.types.each_with_index do |type, i|
+        type_string += "/" if i > 0
+        type_string += GameData::Type.get(type).name
       end
-      textpos.push([_INTL("FLOW"), 2 + (@info.bitmap.width / 2), 30, 0,
+      textpos.push([_INTL("{1}  Lv.{2}  {3}", pkmn.name, pkmn.level, type_string),
+                    2, 6, :left, Color.new(248, 248, 248), Color.new(128, 128, 128)])
+      textpos.push([_INTL("FLOW"), 2 + (@info.bitmap.width / 2), 30, :left,
                     Color.new(248, 248, 248), Color.new(128, 128, 128)])
       # draw heart gauge
       pbDrawGauge(@info.bitmap, Rect.new(@info.bitmap.width * 3 / 4, 8, @info.bitmap.width * 1 / 4, 8),
@@ -972,8 +953,7 @@ class PurifyChamberSetView < Sprite
                   Color.new(0, 0, 248), @chamber.chamberFlow(@set), 7)
     end
     if @chamber.setCount(@set) > 0
-      textpos.push([_INTL("TEMPO"), 2, 30, 0,
-                    Color.new(248, 248, 248), Color.new(128, 128, 128)])
+      textpos.push([_INTL("TEMPO"), 2, 30, :left, Color.new(248, 248, 248), Color.new(128, 128, 128)])
       # draw tempo gauge
       pbDrawGauge(@info.bitmap, Rect.new(@info.bitmap.width * 1 / 4, 32, @info.bitmap.width * 1 / 4, 8),
                   Color.new(0, 0, 248), @chamber[@set].tempo, PurifyChamber.maximumTempo)
@@ -1008,8 +988,8 @@ class PurifyChamberSetView < Sprite
     end
     @__sprites[1 + (PurifyChamber::SETSIZE * 2)].pokemon = @heldpkmn
     @__sprites[1 + (PurifyChamber::SETSIZE * 2)].visible = @view.visible
-    @__sprites[1 + (PurifyChamber::SETSIZE * 2)].x = @view.x + @view.bitmap.width / 2
-    @__sprites[1 + (PurifyChamber::SETSIZE * 2)].y = @view.y + @view.bitmap.height / 2
+    @__sprites[1 + (PurifyChamber::SETSIZE * 2)].x = @view.x + (@view.bitmap.width / 2)
+    @__sprites[1 + (PurifyChamber::SETSIZE * 2)].y = @view.y + (@view.bitmap.height / 2)
     @__sprites[1 + (PurifyChamber::SETSIZE * 2)].z = 3
   end
 
@@ -1105,8 +1085,7 @@ class PurifyChamberScene
     @chamber = chamber
   end
 
-  def pbEnd
-  end
+  def pbEnd; end
 
   def pbOpenSet(set)
     @sprites = {}
@@ -1114,7 +1093,7 @@ class PurifyChamberScene
     @viewport.z = 99999
     @viewportmsg = Viewport.new(0, 0, Graphics.width, Graphics.height)
     @viewportmsg.z = 99999
-    addBackgroundOrColoredPlane(@sprites, "bg", "purifychamberbg",
+    addBackgroundOrColoredPlane(@sprites, "bg", "purifychamber_bg",
                                 Color.new(64, 48, 96), @viewport)
     @sprites["setwindow"] = Window_PurifyChamberSets.new(
       @chamber, 0, 0, 112, Graphics.height, @viewport
@@ -1141,8 +1120,7 @@ class PurifyChamberScene
     @sprites["setview"].cursor = 0
   end
 
-  def pbCloseSetDetail
-  end
+  def pbCloseSetDetail; end
 
   def pbPurify
     pbRefresh
@@ -1188,7 +1166,7 @@ class PurifyChamberScene
   end
 
   def pbSetScreen
-    pbDeactivateWindows(@sprites) {
+    pbDeactivateWindows(@sprites) do
       loop do
         Graphics.update
         Input.update
@@ -1218,11 +1196,11 @@ class PurifyChamberScene
           return [3, 0]
         end
       end
-    }
+    end
   end
 
   def pbChooseSet
-    pbActivateWindow(@sprites, "setwindow") {
+    pbActivateWindow(@sprites, "setwindow") do
       oldindex = @sprites["setwindow"].index
       loop do
         if oldindex != @sprites["setwindow"].index
@@ -1241,7 +1219,7 @@ class PurifyChamberScene
           return -1
         end
       end
-    }
+    end
   end
 
   def pbSwitch(set)
@@ -1308,11 +1286,11 @@ end
 #===============================================================================
 def pbPurifyChamber
   $player.seen_purify_chamber = true
-  pbFadeOutIn {
+  pbFadeOutIn do
     scene = PurifyChamberScene.new
     screen = PurifyChamberScreen.new(scene)
     screen.pbStartPurify
-  }
+  end
 end
 
 #===============================================================================
@@ -1323,7 +1301,7 @@ MenuHandlers.add(:pc_menu, :purify_chamber, {
   "order"     => 30,
   "condition" => proc { next $player.seen_purify_chamber },
   "effect"    => proc { |menu|
-    pbMessage(_INTL("\\se[PC access]Accessed the Purify Chamber."))
+    pbMessage("\\se[PC access]" + _INTL("Accessed the Purify Chamber."))
     pbPurifyChamber
     next false
   }

@@ -59,7 +59,7 @@ def pbEditMysteryGift(type, item, id = 0, giftname = "")
     if id == 0
       master = []
       idlist = []
-      if safeExists?("MysteryGiftMaster.txt")
+      if FileTest.exist?("MysteryGiftMaster.txt")
         master = IO.read("MysteryGiftMaster.txt")
         master = pbMysteryGiftDecrypt(master)
       end
@@ -101,7 +101,7 @@ def pbCreateMysteryGift(type, item)
   gift = pbEditMysteryGift(type, item)
   if gift
     begin
-      if safeExists?("MysteryGiftMaster.txt")
+      if FileTest.exist?("MysteryGiftMaster.txt")
         master = IO.read("MysteryGiftMaster.txt")
         master = pbMysteryGiftDecrypt(master)
         master.push(gift)
@@ -124,7 +124,7 @@ end
 # file to be uploaded.
 #===============================================================================
 def pbManageMysteryGifts
-  if !safeExists?("MysteryGiftMaster.txt")
+  if !FileTest.exist?("MysteryGiftMaster.txt")
     pbMessage(_INTL("There are no Mystery Gifts defined."))
     return
   end
@@ -154,7 +154,7 @@ def pbManageMysteryGifts
   command = 0
   loop do
     commands = pbRefreshMGCommands(master, online)
-    command = pbMessage(_INTL("\\ts[]Manage Mystery Gifts (X=online)."), commands, -1, nil, command)
+    command = pbMessage("\\ts[]" + _INTL("Manage Mystery Gifts (X=online)."), commands, -1, nil, command)
     # Gift chosen
     if command == -1 || command == commands.length - 1   # Cancel
       break
@@ -242,10 +242,10 @@ def pbDownloadMysteryGift(trainer)
   sprites = {}
   viewport = Viewport.new(0, 0, Graphics.width, Graphics.height)
   viewport.z = 99999
-  addBackgroundPlane(sprites, "background", "mysteryGiftbg", viewport)
+  addBackgroundPlane(sprites, "background", "mysterygift_bg", viewport)
   pbFadeInAndShow(sprites)
   sprites["msgwindow"] = pbCreateMessageWindow
-  pbMessageDisplay(sprites["msgwindow"], _INTL("Searching for a gift.\nPlease wait...\\wtnp[0]"))
+  pbMessageDisplay(sprites["msgwindow"], _INTL("Searching for a gift.\nPlease wait...") + "\\wtnp[0]")
   string = pbDownloadToString(MysteryGift::URL)
   if nil_or_empty?(string)
     pbMessageDisplay(sprites["msgwindow"], _INTL("No new gifts are available."))
@@ -268,7 +268,7 @@ def pbDownloadMysteryGift(trainer)
           commands.push(gift[3])
         end
         commands.push(_INTL("Cancel"))
-        pbMessageDisplay(sprites["msgwindow"], _INTL("Choose the gift you want to receive.\\wtnp[0]"))
+        pbMessageDisplay(sprites["msgwindow"], _INTL("Choose the gift you want to receive.") + "\\wtnp[0]")
         command = pbShowCommands(sprites["msgwindow"], commands, -1)
         if command == -1 || command == commands.length - 1
           break
@@ -286,32 +286,28 @@ def pbDownloadMysteryGift(trainer)
             sprite.x = Graphics.width / 2
             sprite.y = -sprite.height / 2
           end
-          distanceDiff = 8 * 20 / Graphics.frame_rate
+          timer_start = System.uptime
+          start_y = sprite.y
           loop do
+            sprite.y = lerp(start_y, Graphics.height / 2, 1.5, timer_start, System.uptime)
             Graphics.update
             Input.update
             sprite.update
-            sprite.y += distanceDiff
             break if sprite.y >= Graphics.height / 2
           end
           pbMEPlay("Battle capture success")
-          (Graphics.frame_rate * 3).times do
-            Graphics.update
-            Input.update
-            sprite.update
-            pbUpdateSceneMap
-          end
+          pbWait(3.0) { sprite.update }
           sprites["msgwindow"].visible = true
-          pbMessageDisplay(sprites["msgwindow"], _INTL("The gift has been received!")) { sprite.update }
+          pbMessageDisplay(sprites["msgwindow"], _INTL("The gift has been received!") + "\1") { sprite.update }
           pbMessageDisplay(sprites["msgwindow"], _INTL("Please pick up your gift from the deliveryman in any Poké Mart.")) { sprite.update }
           trainer.mystery_gifts.push(gift)
           pending.delete_at(command)
-          opacityDiff = 16 * 20 / Graphics.frame_rate
+          timer_start = System.uptime
           loop do
+            sprite.opacity = lerp(255, 0, 1.5, timer_start, System.uptime)
             Graphics.update
             Input.update
             sprite.update
-            sprite.opacity -= opacityDiff
             break if sprite.opacity <= 0
           end
           sprite.dispose
@@ -341,11 +337,11 @@ def pbMysteryGiftDecrypt(gift)
   return [] if nil_or_empty?(gift)
   ret = Marshal.restore(Zlib::Inflate.inflate(gift.unpack("m")[0]))
   if ret
-    ret.each do |gift|
-      if gift[1] == 0   # Pokémon
-        gift[2] = gift[2]
+    ret.each do |gft|
+      if gft[1] == 0   # Pokémon
+        gft[2] = gft[2]
       else   # Item
-        gift[2] = GameData::Item.get(gift[2]).id
+        gft[2] = GameData::Item.get(gft[2]).id
       end
     end
   end
@@ -378,25 +374,25 @@ def pbReceiveMysteryGift(id)
   if gift[1] == 0   # Pokémon
     gift[2].personalID = rand(2**16) | (rand(2**16) << 16)
     gift[2].calc_stats
-    time = pbGetTimeNow
-    gift[2].timeReceived = time.getgm.to_i
+    gift[2].timeReceived = Time.now.to_i
     gift[2].obtain_method = 4   # Fateful encounter
     gift[2].record_first_moves
     gift[2].obtain_level = gift[2].level
     gift[2].obtain_map = $game_map&.map_id || 0
     was_owned = $player.owned?(gift[2].species)
     if pbAddPokemonSilent(gift[2])
-      pbMessage(_INTL("\\me[Pkmn get]{1} received {2}!", $player.name, gift[2].name))
+      pbMessage(_INTL("{1} received {2}!", $player.name, gift[2].name) + "\\me[Pkmn get]\\wtnp[80]")
       $player.mystery_gifts[index] = [id]
       # Show Pokédex entry for new species if it hasn't been owned before
-      if Settings::SHOW_NEW_SPECIES_POKEDEX_ENTRY_MORE_OFTEN && !was_owned && $player.has_pokedex
+      if Settings::SHOW_NEW_SPECIES_POKEDEX_ENTRY_MORE_OFTEN && !was_owned &&
+         $player.has_pokedex && $player.pokedex.species_in_unlocked_dex?(gift[2].species)
         pbMessage(_INTL("{1}'s data was added to the Pokédex.", gift[2].name))
         $player.pokedex.register_last_seen(gift[2])
-        pbFadeOutIn {
+        pbFadeOutIn do
           scene = PokemonPokedexInfo_Scene.new
           screen = PokemonPokedexInfoScreen.new(scene)
           screen.pbDexEntry(gift[2].species)
-        }
+        end
       end
       return true
     end
@@ -406,18 +402,23 @@ def pbReceiveMysteryGift(id)
     if $bag.can_add?(item, qty)
       $bag.add(item, qty)
       itm = GameData::Item.get(item)
-      itemname = (qty > 1) ? itm.name_plural : itm.name
-      if item == :LEFTOVERS
-        pbMessage(_INTL("\\me[Item get]You obtained some \\c[1]{1}\\c[0]!\\wtnp[30]", itemname))
+      itemname = (qty > 1) ? itm.portion_name_plural : itm.portion_name
+      if item == :DNASPLICERS
+        pbMessage("\\me[Item get]" + _INTL("You obtained \\c[1]{1}\\c[0]!", itemname) + "\\wtnp[40]")
       elsif itm.is_machine?   # TM or HM
-        pbMessage(_INTL("\\me[Item get]You obtained \\c[1]{1} {2}\\c[0]!\\wtnp[30]", itemname,
-                        GameData::Move.get(itm.move).name))
+        if qty > 1
+          pbMessage("\\me[Machine get]" + _INTL("You obtained {1} \\c[1]{2} {3}\\c[0]!",
+                                                qty, itemname, GameData::Move.get(itm.move).name) + "\\wtnp[70]")
+        else
+          pbMessage("\\me[Machine get]" + _INTL("You obtained \\c[1]{1} {2}\\c[0]!", itemname,
+                                                GameData::Move.get(itm.move).name) + "\\wtnp[70]")
+        end
       elsif qty > 1
-        pbMessage(_INTL("\\me[Item get]You obtained {1} \\c[1]{2}\\c[0]!\\wtnp[30]", qty, itemname))
+        pbMessage("\\me[Item get]" + _INTL("You obtained {1} \\c[1]{2}\\c[0]!", qty, itemname) + "\\wtnp[40]")
       elsif itemname.starts_with_vowel?
-        pbMessage(_INTL("\\me[Item get]You obtained an \\c[1]{1}\\c[0]!\\wtnp[30]", itemname))
+        pbMessage("\\me[Item get]" + _INTL("You obtained an \\c[1]{1}\\c[0]!", itemname) + "\\wtnp[40]")
       else
-        pbMessage(_INTL("\\me[Item get]You obtained a \\c[1]{1}\\c[0]!\\wtnp[30]", itemname))
+        pbMessage("\\me[Item get]" + _INTL("You obtained a \\c[1]{1}\\c[0]!", itemname) + "\\wtnp[40]")
       end
       $player.mystery_gifts[index] = [id]
       return true

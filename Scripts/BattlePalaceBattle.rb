@@ -65,10 +65,10 @@ class BattlePalaceBattle < Battle
   end
 
   def pbMoveCategory(move)
-    if move.target == :User || move.function == "MultiTurnAttackBideThenReturnDoubleDamage"
+    if move.target == :User || move.function_code == "MultiTurnAttackBideThenReturnDoubleDamage"
       return 1
     elsif move.statusMove? ||
-          move.function == "CounterPhysicalDamage" || move.function == "CounterSpecialDamage"
+          move.function_code == "CounterPhysicalDamage" || move.function_code == "CounterSpecialDamage"
       return 2
     else
       return 0
@@ -164,8 +164,6 @@ class BattlePalaceBattle < Battle
   end
 end
 
-
-
 #===============================================================================
 #
 #===============================================================================
@@ -179,13 +177,14 @@ class Battle::AI
     @justswitched = [false, false, false, false]
   end
 
-  unless method_defined?(:_battlePalace_pbEnemyShouldWithdraw?)
-    alias _battlePalace_pbEnemyShouldWithdraw? pbEnemyShouldWithdraw?
+  unless method_defined?(:_battlePalace_pbChooseToSwitchOut)
+    alias _battlePalace_pbChooseToSwitchOut pbChooseToSwitchOut
   end
 
-  def pbEnemyShouldWithdraw?(idxBattler)
-    return _battlePalace_pbEnemyShouldWithdraw?(idxBattler) if !@battlePalace
-    thispkmn = @battle.battlers[idxBattler]
+  def pbChooseToSwitchOut(force_switch = false)
+    return _battlePalace_pbChooseToSwitchOut(force_switch) if !@battlePalace
+    thispkmn = @user
+    idxBattler = @user.index
     shouldswitch = false
     if thispkmn.effects[PBEffects::PerishSong] == 1
       shouldswitch = true

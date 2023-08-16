@@ -1,4 +1,0 @@
-Name       = Lopsided Battles (Always allow doubles)
-Version    = 1.0.0
-Essentials = 20.1
-Credits    = TheLechKing
