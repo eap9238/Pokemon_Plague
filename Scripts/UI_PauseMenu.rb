@@ -219,6 +219,22 @@ MenuHandlers.add(:pause_menu, :pokegear, {
   }
 })
 
+MenuHandlers.add(:pause_menu, :quests, {
+  "name"      =>  _INTL("Quests"),
+  "order"     => 50,
+  "condition" => proc { next hasAnyQuests? },
+  "effect"    => proc { |menu|
+    pbPlayDecisionSE
+    pbFadeOutIn {
+      scene = QuestList_Scene.new
+      screen = QuestList_Screen.new(scene)
+      screen.pbStartScreen
+      menu.pbRefresh
+    }
+    next false
+  }
+})
+
 MenuHandlers.add(:pause_menu, :town_map, {
   "name"      => _INTL("Town Map"),
   "order"     => 40,
