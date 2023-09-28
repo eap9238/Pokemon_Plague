@@ -34,8 +34,10 @@ class Pokemon
   attr_accessor :ribbons
   # @return [Integer] contest stats
   attr_accessor :cool, :beauty, :cute, :smart, :tough, :sheen
-  # @return [Integer] the Pokérus strain and infection time
+  # @return [Pokerus] the Pokérus state of the pokemon
   attr_accessor :pokerus
+  # @return [Boolean] has the Pokémon been tested for Pokérus
+  attr_accessor :tested
   # @return [Integer] this Pokémon's current happiness (an integer between 0 and 255)
   attr_accessor :happiness
   # @return [Symbol] the item ID of the Poké Ball this Pokémon is in
@@ -789,46 +791,76 @@ class Pokemon
 
   # @return [Integer] the Pokérus infection stage for this Pokémon
   def pokerusStrain
-    return @pokerus / 16
+    return @pokerus
   end
 
   # Returns the Pokérus infection stage for this Pokémon. The possible stages are
   # 0 (not infected), 1 (infected) and 2 (cured).
   # @return [0, 1, 2] current Pokérus infection stage
   def pokerusStage
-    return 0 if @pokerus == 0
-    return ((@pokerus % 16) == 0) ? 2 : 1
+    return @pokerus.stage
+  end
+
+  def pokerusTest()
+    if @pokerus.stage == 1
+      @tested = true
+      return true
+    end
+
+    return false
+  end
+
+  def isSymptomatic()
+    return @pokerus.symptomatic() || @tested
   end
 
   # Gives this Pokémon Pokérus (either the specified strain or a random one).
   # @param strain [Integer] Pokérus strain to give (1-15 inclusive, or 0 for random)
-  def givePokerus(strain = 0)
+  def givePokerus(strain = -1)
     return if self.pokerusStage == 2   # Can't re-infect a cured Pokémon
     $stats.pokerus_infections += 1
-    strain = rand(1...16) if strain <= 0 || strain >= 16
-    time = 1 + (strain % 4)
-    @pokerus = time
-    @pokerus |= strain << 4
+    @pokerus.givePokerus(strain)
+    calc_stats()
+  end
+
+  # Gives this Pokémon Plaguérus (either the specified strain or a random one).
+  # @param strain [Integer] Plague strain to give (1-15 inclusive, or 0 for random)
+  def givePlague(strain = -1)
+    return if self.pokerusStage == 2   # Can't re-infect a cured Pokémon
+    $stats.pokerus_infections += 1
+    @pokerus.givePlague(strain)
+    calc_stats()
   end
 
   # Resets the infection time for this Pokémon's Pokérus (even if cured).
   def resetPokerusTime
-    return if @pokerus == 0
-    strain = @pokerus / 16
-    time = 1 + (strain % 4)
-    @pokerus = time
-    @pokerus |= strain << 4
+    @pokerus.reset()
+  end
+
+  def infectPokemon(infection)
+    if infection.plague
+      givePlague(infection.strain)
+    else
+      givePokerus(infection.strain)
+    end
   end
 
   # Reduces the time remaining for this Pokémon's Pokérus (if infected).
-  def lowerPokerusCount
-    return if self.pokerusStage != 1
-    @pokerus -= 1
+  def lowerPokerusCount(count = 1)
+    @pokerus.decreaseStep(count)
+    calc_stats()
   end
 
   # Cures this Pokémon's Pokérus (if infected).
   def curePokerus
-    @pokerus -= @pokerus % 16
+    @pokerus.cure()
+    calc_stats()
+  end
+
+  # Removes this Pokémon's Pokérus (if infected).
+  def clearPokerus
+    @pokerus.clear()
+    calc_stats()
   end
 
   #=============================================================================
@@ -1116,14 +1148,15 @@ class Pokemon
         stats[s.id] = calcStat(base_stats[s.id], this_level, this_IV[s.id], @ev[s.id], nature_mod[s.id])
       end
     end
-    hp_difference = stats[:HP] - @totalhp
-    @totalhp = stats[:HP]
-    self.hp = [@hp + hp_difference, 1].max if @hp > 0 || hp_difference > 0
-    @attack  = stats[:ATTACK]
-    @defense = stats[:DEFENSE]
-    @spatk   = stats[:SPECIAL_ATTACK]
-    @spdef   = stats[:SPECIAL_DEFENSE]
-    @speed   = stats[:SPEED]
+    hp_difference = @totalhp - @hp
+    @totalhp = (stats[:HP] * @pokerus.severity).ceil()
+    @hp = @totalhp - hp_difference
+    @hp = @hp.clamp(0, @totalhp)
+    @attack  = (stats[:ATTACK] * @pokerus.severity).ceil()
+    @defense = (stats[:DEFENSE] * @pokerus.severity).ceil()
+    @spatk   = (stats[:SPECIAL_ATTACK] * @pokerus.severity).ceil()
+    @spdef   = (stats[:SPECIAL_DEFENSE] * @pokerus.severity).ceil()
+    @speed   = (stats[:SPEED] * @pokerus.severity).ceil()
   end
 
   #=============================================================================
@@ -1183,7 +1216,8 @@ class Pokemon
     @smart            = 0
     @tough            = 0
     @sheen            = 0
-    @pokerus          = 0
+    @pokerus          = Pokerus.new()
+    @tested           = false
     @name             = nil
     @happiness        = species_data.happiness
     @poke_ball        = :POKEBALL

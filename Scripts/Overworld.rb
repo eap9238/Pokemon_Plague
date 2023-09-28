@@ -2,25 +2,25 @@
 # Constant checks
 #===============================================================================
 # Pokérus check
-EventHandlers.add(:on_frame_update, :pokerus_counter,
-  proc {
-    next if !$player || $player.party.none? { |pkmn| pkmn.pokerusStage == 1 }
-    last = $PokemonGlobal.pokerusTime
-    next if !last
-    now = pbGetTimeNow
-    if last.year != now.year || last.month != now.month || last.day != now.day
-      $player.pokemon_party.each { |pkmn| pkmn.lowerPokerusCount }
-      $PokemonGlobal.pokerusTime = now
-    end
-  }
-)
+#EventHandlers.add(:on_frame_update, :pokerus_counter,
+#  proc {
+#    next if !$player || $player.party.none? { |pkmn| pkmn.pokerusStage == 1 }
+#    last = $PokemonGlobal.pokerusTime
+#    next if !last
+#    now = pbGetTimeNow
+#    if last.year != now.year || last.month != now.month || last.day != now.day
+#      $player.pokemon_party.each { |pkmn| pkmn.lowerPokerusCount }
+#      $PokemonGlobal.pokerusTime = now
+#    end
+#  }
+#)
 
 # Returns whether the Poké Center should explain Pokérus to the player, if a
 # healed Pokémon has it.
 def pbPokerus?
   return false if $game_switches[Settings::SEEN_POKERUS_SWITCH]
   $player.party.each do |i|
-    return true if i.pokerusStage == 1
+    return true if i.isSymptomatic()
   end
   return false
 end
@@ -108,6 +108,17 @@ EventHandlers.add(:on_player_step_taken_can_transfer, :poison_party,
         handled[0] = true
         pbCheckAllFainted
       end
+    end
+  }
+)
+
+# Progress Pokérus
+EventHandlers.add(:on_player_step_taken_can_transfer, :pokerus_counter,
+  proc {
+    next if !$player
+    next if $PokemonGlobal.stepcount % 4 != 0
+    $player.pokemon_party.each do |pkmn| 
+      pkmn.lowerPokerusCount()
     end
   }
 )

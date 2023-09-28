@@ -118,26 +118,27 @@ MenuHandlers.add(:pokemon_debug_menu, :set_pokerus, {
     loop do
       pokerus = (pkmn.pokerus) ? pkmn.pokerus : 0
       msg = [_INTL("{1} doesn't have Pokérus.", pkmn.name),
-             _INTL("Has strain {1}, infectious for {2} more days.", pokerus / 16, pokerus % 16),
-             _INTL("Has strain {1}, not infectious.", pokerus / 16)][pkmn.pokerusStage]
+             _INTL("Has {1} strain {2}, infectious for {3} more steps.", pokerus.plague ? "dangerous" : "benign", pokerus.strain, pokerus.step),
+             _INTL("Has strain {1}, not infectious.", pokerus.strain),
+             _INTL("Has strain {1}, is not responsive", pokerus.strain)][pkmn.pokerusStage]
       cmd = screen.pbShowCommands(msg,
-                                  [_INTL("Give random strain"),
+                                  [_INTL("Give safe strain"),
+                                   _INTL("Give dangerous strain"),
                                    _INTL("Make not infectious"),
                                    _INTL("Clear Pokérus")], cmd)
       break if cmd < 0
       case cmd
       when 0   # Give random strain
-        pkmn.givePokerus
+        pkmn.givePokerus()
         screen.pbRefreshSingle(pkmnid)
-      when 1   # Make not infectious
-        if pokerus > 0
-          strain = pokerus / 16
-          p = strain << 4
-          pkmn.pokerus = p
-          screen.pbRefreshSingle(pkmnid)
-        end
-      when 2   # Clear Pokérus
-        pkmn.pokerus = 0
+      when 1   # Give random plague
+        pkmn.givePlague()
+        screen.pbRefreshSingle(pkmnid)
+      when 2   # Make not infectious
+        pkmn.curePokerus()
+        screen.pbRefreshSingle(pkmnid)
+      when 3   # Clear Pokérus
+        pkmn.clearPokerus()
         screen.pbRefreshSingle(pkmnid)
       end
     end

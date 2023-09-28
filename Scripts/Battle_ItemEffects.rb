@@ -33,6 +33,8 @@ module Battle::ItemEffects
   # Experience and EV gain
   ExpGainModifier                 = ItemHandlerHash.new   # Lucky Egg
   EVGainModifier                  = ItemHandlerHash.new
+  # Pokerus Infection
+  PkrsInfectionModifier           = ItemHandlerHash.new   # Face Mask
   # Weather and terrin
   WeatherExtender                 = ItemHandlerHash.new
   TerrainExtender                 = ItemHandlerHash.new   # Terrain Extender
@@ -163,6 +165,12 @@ module Battle::ItemEffects
     return false if !EVGainModifier[item]
     EVGainModifier.trigger(item, battler, ev_array)
     return true
+  end
+
+  #=============================================================================
+
+  def self.triggerPkrsInfectionModifier(item, battler, chance)
+    return trigger(PkrsInfectionModifier, item, battler, chance, ret: -1)
   end
 
   #=============================================================================
@@ -1742,6 +1750,16 @@ Battle::ItemEffects::EVGainModifier.add(:POWERLENS,
 Battle::ItemEffects::EVGainModifier.add(:POWERWEIGHT,
   proc { |item, battler, evYield|
     evYield[:HP] += (Settings::MORE_EVS_FROM_POWER_ITEMS) ? 8 : 4
+  }
+)
+
+#===============================================================================
+# PkrsInfectionModifier handlers
+#===============================================================================
+
+Battle::ItemEffects::PkrsInfectionModifier.add(:FACEMASK,
+  proc { |item, battler, chance|
+    next (chance * 0.1).ceil()
   }
 )
 

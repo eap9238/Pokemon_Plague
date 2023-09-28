@@ -324,7 +324,7 @@ class PokemonSummary_Scene
       status = GameData::Status.count - 1
     elsif @pokemon.status != :NONE
       status = GameData::Status.get(@pokemon.status).icon_position
-    elsif @pokemon.pokerusStage == 1
+    elsif @pokemon.isSymptomatic()
       status = GameData::Status.count
     end
     if status >= 0
@@ -335,7 +335,7 @@ class PokemonSummary_Scene
       imagepos.push(["Graphics/UI/Summary/icon_pokerus", 176, 100])
     end
     # Show shininess star
-    imagepos.push(["Graphics/UI/shiny", 2, 134]) if @pokemon.shiny?
+    #imagepos.push(["Graphics/UI/shiny", 2, 134]) if @pokemon.shiny?
     # Draw all images
     pbDrawImagePositions(overlay, imagepos)
     # Write various bits of text
@@ -641,6 +641,7 @@ class PokemonSummary_Scene
     overlay = @sprites["overlay"].bitmap
     base   = Color.new(248, 248, 248)
     shadow = Color.new(104, 104, 104)
+    
     # Determine which stats are boosted and lowered by the Pokémon's nature
     statshadows = {}
     GameData::Stat.each_main { |s| statshadows[s.id] = shadow }
@@ -650,6 +651,18 @@ class PokemonSummary_Scene
         statshadows[change[0]] = Color.new(64, 120, 152) if change[1] < 0
       end
     end
+
+    if @pokemon.pokerus.severity <= 0.25
+      textColour = Color.new(248, 72, 72)
+      textShadow = Color.new(136, 48, 48)
+    elsif @pokemon.pokerus.severity <= 0.5
+      textColour = Color.new(248, 136, 32)
+      textShadow =Color.new(144, 72, 24)
+    elsif @pokemon.pokerus.severity <= 0.75
+      textColour = Color.new(248, 192, 0)
+      textShadow = Color.new(144, 104, 0)
+    end
+
     # Write various bits of text
     textpos = [
       [_INTL("HP"), 292, 82, :center, base, statshadows[:HP]],

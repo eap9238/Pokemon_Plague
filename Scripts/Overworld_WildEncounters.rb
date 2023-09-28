@@ -427,6 +427,8 @@ def pbGenerateWildPokemon(species, level, isRoamer = false)
   end
   # Give Pokérus
   genwildpoke.givePokerus if rand(65_536) < Settings::POKERUS_CHANCE
+  # Give Plaguérus
+  genwildpoke.givePlague if rand(65_536) < Settings::PLAGUE_CHANCE
   # Change wild Pokémon's gender/nature depending on the lead party Pokémon's
   # ability
   if first_pkmn

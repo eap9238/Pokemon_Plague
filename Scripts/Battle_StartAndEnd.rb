@@ -484,15 +484,45 @@ class Battle
     if @internalBattle
       infected = []
       $player.party.each_with_index do |pkmn, i|
-        infected.push(i) if pkmn.pokerusStage == 1
+        infected.push(i) if pkmn.pokerusStage == 1 || pkmn.pokerusStage == 3
       end
       infected.each do |idxParty|
-        strain = $player.party[idxParty].pokerusStrain
-        if idxParty > 0 && $player.party[idxParty - 1].pokerusStage == 0 && rand(3) == 0   # 33%
-          $player.party[idxParty - 1].givePokerus(strain)
+        strain = $player.party[idxParty].pokerus
+
+        chance = 30
+        # Check if the spreading pokemon has protection
+        i = Battle::ItemEffects.triggerPkrsInfectionModifier($player.party[idxParty].item, nil, chance)
+        if i < 0
+          i = Battle::ItemEffects.triggerPkrsInfectionModifier(@initialItems[0][idxParty], nil, chance)
         end
-        if idxParty < $player.party.length - 1 && $player.party[idxParty + 1].pokerusStage == 0 && rand(3) == 0   # 33%
-          $player.party[idxParty + 1].givePokerus(strain)
+        chance = i if i >= 0
+
+        if ((idxParty > 0) && ($player.party[idxParty - 1].pokerusStage == 0))
+          # Check if the receptive pokemon has protection
+          odds = chance
+          i = Battle::ItemEffects.triggerPkrsInfectionModifier($player.party[idxParty - 1].item, nil, odds)
+          if i < 0
+            i = Battle::ItemEffects.triggerPkrsInfectionModifier(@initialItems[0][idxParty - 1], nil, odds)
+          end
+          odds = i if i >= 0
+
+          if rand(100) <= odds
+            $player.party[idxParty - 1].infectPokemon(strain)
+          end
+        end
+
+        if ((idxParty < $player.party.length - 1) && ($player.party[idxParty + 1].pokerusStage == 0))
+          # Check if the receptive pokemon has protection
+          odds = chance
+          i = Battle::ItemEffects.triggerPkrsInfectionModifier($player.party[idxParty + 1].item, nil, odds)
+          if i < 0
+            i = Battle::ItemEffects.triggerPkrsInfectionModifier(@initialItems[0][idxParty + 1], nil, odds)
+          end
+          odds = i if i >= 0
+
+          if rand(100) <= odds
+            $player.party[idxParty + 1].infectPokemon(strain)
+          end
         end
       end
     end

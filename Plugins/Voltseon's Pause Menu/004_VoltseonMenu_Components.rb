@@ -135,7 +135,7 @@ class VPM_PokemonPartyHud < Component
         status = GameData::Status.count - 1
       elsif pokemon.status != :NONE
         status = GameData::Status.get(pokemon.status).icon_position
-      elsif pokemon.pokerusStage == 1
+      elsif pokemon.isSymptomatic()
         status = GameData::Status.count
       end
       if status > 0
