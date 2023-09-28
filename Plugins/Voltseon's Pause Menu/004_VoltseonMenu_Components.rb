@@ -143,10 +143,10 @@ class VPM_PokemonPartyHud < Component
         @sprites["overlay"].bitmap.blt(spacing + (Graphics.width/8) + 48, (Graphics.height / 2) - 106, @status_bmp, statusrect)
       end
       # Shiny Icon
-      if pokemon.shiny?
-        @sprites["overlay"].bitmap.blt(spacing + (Graphics.width / 8) + 52, (Graphics.height / 2) - 142,
-                          @shiny_bmp,Rect.new(0, 0, @shiny_bmp.width, @shiny_bmp.height))
-      end
+      #if pokemon.shiny?
+      #  @sprites["overlay"].bitmap.blt(spacing + (Graphics.width / 8) + 52, (Graphics.height / 2) - 142,
+      #                    @shiny_bmp,Rect.new(0, 0, @shiny_bmp.width, @shiny_bmp.height))
+      #end
     end
   end
 

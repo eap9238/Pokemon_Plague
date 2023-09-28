@@ -367,7 +367,7 @@ class PokemonPartyPanel < Sprite
     draw_gender
     draw_hp
     draw_status
-    draw_shiny_icon
+    #draw_shiny_icon
     draw_annotation
   end
 
