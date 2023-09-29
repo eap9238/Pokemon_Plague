@@ -6563,3 +6563,11 @@ Pocket = 8
 Price = 0
 Flags = KeyItem
 Description = A faded sea chart that shows the way to a certain island.
+#-------------------------------
+[KIDSPLUSH]
+Name = Mudkip Plush
+NamePlural = Mudkip Plushes
+Pocket = 8
+Price = 0
+Flags = KeyItem
+Description = A battered toy Mudkip, someone must be missing this. 

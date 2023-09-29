@@ -13,8 +13,8 @@ module QuestModule
     :QuestGiver => "Little Boy",
     :Stage1 => "Look for clues.",
     :Location1 => "Lappet Town",
-    :QuestDescription => "Some wild Pokémon stole a little boy's favourite toy. Find those troublemakers and help him get it back.",
-    :RewardString => "Something shiny!"
+    :QuestDescription => "Some wild Pokémon stole a little boy's favourite toy. Search the area and help him get it back.",
+    :RewardString => "Love and adulation"
   }
   
   # Here's an extension of the above that includes multiple stages
