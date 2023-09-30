@@ -163,6 +163,7 @@ class Player_Quests
       questNew = Quest.new(quest,color,story)
       questNew.stage = stageNum
       @active_quests.push(questNew)
+      pbMessage(_INTL("\\se[{1}]<ac><c2=#{colorQuest("red")}>New quest discovered!</c2>\nCheck your quest log for more details!</ac>",QUEST_JINGLE))
     end
   end
 end
@@ -211,6 +212,21 @@ end
 def advanceQuestToStage(quest,stageNum,color=nil,story=false)
   return if !$PokemonGlobal
   $PokemonGlobal.quests.advanceQuestToStage(quest,stageNum,color,story)
+end
+
+# Change given description of quest
+def overwriteQuestDesc(quest, desc="")
+  QuestModule.const_get(quest)[:QuestDescription] = _I(desc)
+end
+
+# Change given description of quest
+def overwriteQuestGiver(quest, giver="")
+  QuestModule.const_get(quest)[:QuestGiver] = _I(giver)
+end
+
+# Change given description of quest
+def overwriteQuestReward(quest, reward="")
+  QuestModule.const_get(quest)[:RewardString] = _I(reward)
 end
 
 # Get symbolic names of active quests
@@ -323,6 +339,13 @@ def hasAnyQuests?
     return true
   end
   return false      
+end
+
+def isQuestActive(quest)
+  $PokemonGlobal.quests.active_quests.each do |s|
+    return true if s.id == quest
+  end
+  return false
 end
 
 def getCurrentStage(quest)

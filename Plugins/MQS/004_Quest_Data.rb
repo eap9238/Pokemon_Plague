@@ -11,9 +11,13 @@ module QuestModule
     :ID => "1",
     :Name => "Introductions",
     :QuestGiver => "Little Boy",
-    :Stage1 => "Look for clues.",
-    :Location1 => "Lappet Town",
-    :QuestDescription => "Some wild Pokémon stole a little boy's favourite toy. Search the area and help him get it back.",
+    :Stage1 => "Search for the toy.",
+    :Stage2 => "Find the owner.",
+    :Stage3 => "Return with your prize!",
+    :Location1 => "Tall Grass",
+    :Location2 => "???",
+    :Location3 => "Lappet Town",
+    :QuestDescription => "Some wild Pokémon stole a little boy's favourite toy. You should help him get it back.",
     :RewardString => "Love and adulation"
   }
   
