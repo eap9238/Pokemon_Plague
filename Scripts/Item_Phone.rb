@@ -99,6 +99,16 @@ class Phone
     return true
   end
 
+  # Check if is already in contacts
+  def has_contact(name)
+    @contacts.each do |con|
+      if (con.name == name)
+        return true
+      end
+    end    
+    return false
+  end
+
   # Rearranges the list of phone contacts to put all visible contacts first,
   # followed by all invisible contacts.
   def sort_contacts
